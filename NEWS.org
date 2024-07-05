@@ -1,6 +1,10 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.13 - 2024-07-05 - Sacha Chua
+
+- Bugfix: Fix the requires in subed-waveform to load subed-common.
+
 ** Version 1.2.12 - 2024-07-05 - Sacha Chua
 
 - Bugfix: Handle SRT cues that have lines that

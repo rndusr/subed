@@ -31,7 +31,6 @@
 (require 'subed-config)
 (require 'subed-debug)
 (require 'subed-mpv)
-(require 'subed-waveform)
 
 (declare-function subed-tsv-mode "subed-tsv" ())
 
