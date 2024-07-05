@@ -52,8 +52,18 @@
     (define-key subed-mode-map (kbd "M-p") #'subed-backward-subtitle-text)
     (define-key subed-mode-map (kbd "C-M-a") #'subed-jump-to-subtitle-text)
     (define-key subed-mode-map (kbd "C-M-e") #'subed-jump-to-subtitle-end)
-    (define-key subed-mode-map (kbd "M-[") #'subed-decrease-start-time)
-    (define-key subed-mode-map (kbd "M-]") #'subed-increase-start-time)
+    ;; Binding M-[ when Emacs runs in a terminal emulator inserts "O" and "I"
+    ;; every time the terminal window looses/gains focus.
+    ;; https://emacs.stackexchange.com/questions/48738
+    ;; https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-FocusIn_FocusOut
+    ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Input-Focus.html
+    (if (display-graphic-p)
+        (progn
+          (define-key subed-mode-map (kbd "M-[") #'subed-decrease-start-time)
+          (define-key subed-mode-map (kbd "M-]") #'subed-increase-start-time))
+      (progn
+        (define-key subed-mode-map (kbd "C-M-[") #'subed-decrease-start-time)
+        (define-key subed-mode-map (kbd "C-M-]") #'subed-increase-start-time)))
     (define-key subed-mode-map (kbd "M-{") #'subed-decrease-stop-time)
     (define-key subed-mode-map (kbd "M-}") #'subed-increase-stop-time)
     (define-key subed-mode-map (kbd "C-M-n") #'subed-move-subtitle-forward)

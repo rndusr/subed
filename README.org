@@ -34,9 +34,10 @@ formats are:
   many subtitles to insert and whether they are inserted before or after the
   current subtitle.
 - Kill subtitles (~M-k~).
-- Adjust subtitle start (~M-[~ / ~M-]~) and stop (~M-{~ / ~M-}~) time.  A
-  prefix argument sets the number of milliseconds for the current session
-  (e.g. ~C-u 1000 M-[ M-[ M-[~ decreases start time by 3 seconds).
+- Adjust subtitle start (~M-[~ / ~M-]~ or ~C-M-[~ / ~C-M-]~ if Emacs lives in a
+  terminal) and stop (~M-{~ / ~M-}~) time.  A prefix argument sets the number of
+  milliseconds for the current session (e.g. ~C-u 1000 M-[ M-[ M-[~ decreases
+  start time by 3 seconds).
 - Move the current subtitle or all marked subtitles
   (~subed-move-subtitles~) forward (~C-M-n~) or backward (~C-M-p~) in
   time without changing subtitle duration.  A prefix argument sets the
