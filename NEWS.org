@@ -1,6 +1,12 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.12 - 2024-07-05 - Sacha Chua
+
+- Bugfix: Handle SRT cues that have lines that
+  only contain numbers, as they were getting
+  confused with cue IDs.
+
 ** Version 1.2.11 - 2022-12-20 - Sacha Chua
 
 - New commands ~subed-shift-subtitles-to-start-at-timestamp~ and
@@ -315,5 +321,3 @@ I implemented the format-specific functions with =cl-defmethod=, so if
 you have any code that refers to functions like
 =subed-vtt--timestamp-to-msecs=, you will need to change your code to
 use generic functions such as =subed-timestamp-to-msecs=.
-
-

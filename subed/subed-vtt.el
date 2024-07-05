@@ -178,10 +178,7 @@ Return point or nil if point did not change or if no subtitle end
 can be found.  Use the format-specific function for MAJOR-MODE."
   (let ((orig-point (point)))
     (subed-jump-to-subtitle-text sub-id)
-    ;; Look for next separator or end of buffer.  We can't use
-    ;; `subed-vtt--regexp-separator' here because if subtitle text is empty,
-    ;; it may be the only empty line in the separator, i.e. there's only one
-    ;; "\n".
+    ;; Look for next separator or end of buffer.
     (let ((regex subed-vtt--regexp-separator))
       (if (eolp)
           (unless (= (point) orig-point)

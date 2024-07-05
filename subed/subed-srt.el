@@ -164,13 +164,11 @@ Return point or nil if point did not change or if no subtitle end
 can be found.  Use the format-specific function for MAJOR-MODE."
   (let ((orig-point (point)))
     (subed-jump-to-subtitle-text sub-id)
-    ;; Look for next separator or end of buffer.  We can't use
-    ;; `subed-srt--regexp-separator' here because if subtitle text is empty,
-    ;; it may be the only empty line in the separator, i.e. there's only one
-    ;; "\n".
-    (let ((regex (concat "\\([[:blank:]]*\n+[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
-      (when (re-search-forward regex nil t)
-        (goto-char (match-beginning 0))))
+    (unless (looking-at "\n") ; handle empty subtitle text
+      ;; Look for next separator or end of buffer.
+      (let ((regex (concat "\\(" subed--regexp-separator "[0-9]+\n\\|\\([[:blank:]]*\n*\\)\\'\\)")))
+        (when (re-search-forward regex nil t)
+          (goto-char (match-beginning 0)))))
     (unless (= (point) orig-point)
       (point))))
 

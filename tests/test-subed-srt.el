@@ -420,7 +420,19 @@ Baz.
          (backward-char)
          (expect (subed-jump-to-subtitle-end) :to-be 96)
          (expect (looking-at "^$") :to-be t)))
-      )
+      (it "works with multi-line cues where a line is all numbers."
+        (with-temp-srt-buffer
+         (insert "1
+00:00:00,000 --> 00:00:01,000
+This is first subtitle.
+123456789
+
+2
+00:00:01,000 --> 00:00:02,000
+This is second subtitle.
+")
+         (goto-char (point-min))
+         (expect (subed-jump-to-subtitle-end) :to-be 66))))
     (describe "to next subtitle ID"
       (it "returns point when there is a next subtitle."
         (with-temp-srt-buffer
@@ -1532,7 +1544,49 @@ Baz.
        (subed-merge-with-next)
        (expect (subed-subtitle-text) :to-equal "Bar.\nBaz.")
        (expect (subed-subtitle-msecs-start) :to-equal 122234)
-       (expect (subed-subtitle-msecs-stop) :to-equal 195500))))
+       (expect (subed-subtitle-msecs-stop) :to-equal 195500)))
+    (it "handles lines that are all numbers."
+      (with-temp-srt-buffer
+       (insert "1
+00:00:00,000 --> 00:00:01,000
+This is first subtitle.
+
+2
+00:00:01,000 --> 00:00:02,000
+This is the second subtitle.
+
+3
+00:00:02,000 --> 00:00:03,000
+This is the third subtitle.
+
+4
+00:00:03,000 --> 00:00:05,000
+This is the fourth subtitle.
+123456789
+
+5
+00:00:05,000 --> 00:00:06,000
+This is the sixth subtitle.")
+       (re-search-backward "This is the fourth subtitle")
+       (subed-merge-with-next)
+       (expect (buffer-string) :to-equal
+               "1
+00:00:00,000 --> 00:00:01,000
+This is first subtitle.
+
+2
+00:00:01,000 --> 00:00:02,000
+This is the second subtitle.
+
+3
+00:00:02,000 --> 00:00:03,000
+This is the third subtitle.
+
+4
+00:00:03,000 --> 00:00:06,000
+This is the fourth subtitle.
+123456789
+This is the sixth subtitle."))))
 
   (describe "A comment"
     (it "is validated."

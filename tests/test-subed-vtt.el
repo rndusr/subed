@@ -596,7 +596,22 @@ Subtitle 1
 Subtitle 2")
          (re-search-backward "NOTE")
          (goto-char (line-beginning-position))
-         (expect (subed-jump-to-subtitle-end) :to-equal 72))))
+         (expect (subed-jump-to-subtitle-end) :to-equal 72)))
+      (it "works with optional IDs and multi-line cues where a line is all numbers."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT
+
+1
+00:00:00.000 --> 00:00:01.000
+This is first subtitle.
+123456789
+
+2
+00:00:01.000 --> 00:00:0.,000
+This is second subtitle.
+")
+         (re-search-backward "This is first")
+         (expect (subed-jump-to-subtitle-end) :to-be 74))))
     (describe "to next subtitle ID"
       (it "returns point when there is a next subtitle."
         (with-temp-vtt-buffer
