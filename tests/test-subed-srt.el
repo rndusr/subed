@@ -1,4 +1,4 @@
-;; -*- eval: (buttercup-minor-mode) -*-
+;; -*- lexical-binding: t; eval: (buttercup-minor-mode) -*-
 
 (load-file "./tests/undercover-init.el")
 (require 'subed-srt)

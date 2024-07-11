@@ -1,6 +1,15 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.14 - 2024-07-05 - Sacha Chua
+
+- Bugfix: subed-waveform should now handle the
+  case where the stop time +
+  subed-waveform-preview-msecs-after might extend
+  past the end of the file.
+
+  Thanks to rodrigomorales1 and rnduser for the bug reports and pull requests!
+
 ** Version 1.2.13 - 2024-07-05 - Sacha Chua
 
 - Bugfix: Fix the requires in subed-waveform to load subed-common.

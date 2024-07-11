@@ -1,5 +1,5 @@
 #+BEGIN_COMMENT
-SPDX-FileCopyrightText: 2021 The subed Authors
+SPDX-FileCopyrightText: 2021-2024 The subed Authors
 
 SPDX-License-Identifier: CC0-1.0
 #+END_COMMENT
@@ -12,4 +12,7 @@ Please note this shouldn't be taken as a list of copyright holders,
 nor is it necessarily complete.
 
 - Random User <rndusr@posteo.de> (original creator)
+- Sacha Chua <sacha@sachachua.com>
 - Sebastian 'seabass' Crane <seabass-labrax@gmx.com>
+- Marcin Borkowski
+- Rodrigo Morales
