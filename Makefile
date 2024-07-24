@@ -14,10 +14,13 @@ test: autoloads test-coverage package-lint checkdoc
 
 test-coverage:
 	mkdir -p coverage
-	UNDERCOVER_FORCE=true emacs -batch -L . -f package-initialize -f buttercup-run-discover
+	UNDERCOVER_FORCE=true emacs -Q -batch -L . -f package-initialize -f buttercup-run-discover
+
+test-some:
+	emacs -Q -batch -L . -f package-initialize -f buttercup-run-discover --pattern "${PATTERN}" --no-skip
 
 test-only:
-	emacs -batch -f package-initialize -L . -f buttercup-run-discover
+	emacs -Q -batch -f package-initialize -L . -f buttercup-run-discover
 
 package-lint:
 	emacs --no-init-file -f package-initialize --batch \

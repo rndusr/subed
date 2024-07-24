@@ -22,7 +22,7 @@ Baz.
     (subed-srt-mode)
     (progn ,@body)))
 
-(describe "SRT"
+(describe "subed-srt"
   (describe "Getting"
     (describe "the subtitle ID"
       (it "returns the subtitle ID if it can be found."

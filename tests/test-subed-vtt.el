@@ -1,4 +1,4 @@
-;; -*- eval: (buttercup-minor-mode); lexical-binding: t -*-
+;; -*- lexical-binding: t; eval: (buttercup-minor-mode) -*-
 
 (load-file "./tests/undercover-init.el")
 (require 'subed)
@@ -24,7 +24,7 @@ Baz.
     (subed-vtt-mode)
     (progn ,@body)))
 
-(describe "VTT"
+(describe "subed-vtt"
   (describe "Getting"
     (describe "the subtitle ID"
       (it "returns the subtitle ID if it can be found."

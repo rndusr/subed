@@ -16,7 +16,7 @@
      (subed-tsv-mode)
      (progn ,@body)))
 
-(describe "TSV"
+(describe "subed-tsv"
   (describe "Getting"
     (describe "the subtitle start/stop time"
       (it "returns the time in milliseconds."

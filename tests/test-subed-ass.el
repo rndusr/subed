@@ -1,4 +1,4 @@
-;; -*- eval: (buttercup-minor-mode); lexical-binding: t; -*-
+;; -*- lexical-binding: t; eval: (buttercup-minor-mode) -*-
 
 (load-file "./tests/undercover-init.el")
 (require 'subed)
@@ -29,7 +29,7 @@ Dialogue: 0,0:00:17.00,0:00:19.80,Default,,0,0,0,,I hope it works.
      (subed-ass-mode)
      (progn ,@body)))
 
-(describe "ASS"
+(describe "subed-ass"
   (describe "Getting"
     (describe "the subtitle start/stop time"
       (it "returns the time in milliseconds."

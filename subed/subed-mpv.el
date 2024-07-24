@@ -187,7 +187,7 @@ again with (cdr DELAYS) as arguments."
 
 (defun subed-mpv--client-connected-p ()
   "Whether the server connection has been established and tested successfully."
-  (if subed-mpv--client-proc t nil))
+  (process-live-p subed-mpv--client-proc))
 
 (defun subed-mpv--client-send (cmd)
   "Send JSON IPC command.
