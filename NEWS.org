@@ -1,6 +1,11 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.15 - 2024-09-06 - Sacha Chua
+
+- Bugfix: Handle extra attributes after VTT timestamps (for example, from YouTube VTTs).
+  Thanks to Jeff Trull for reporting this!
+  
 ** Version 1.2.14 - 2024-07-05 - Sacha Chua
 
 - Bugfix: subed-waveform should now handle the
@@ -9,7 +14,7 @@
   past the end of the file.
 
   Thanks to rodrigomorales1 and rndusr for the bug reports and pull requests!
-
+  
 ** Version 1.2.13 - 2024-07-05 - Sacha Chua
 
 - Bugfix: Fix the requires in subed-waveform to load subed-common.

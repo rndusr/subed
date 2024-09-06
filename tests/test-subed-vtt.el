@@ -34,7 +34,14 @@ Baz.
          (expect (subed-subtitle-id) :to-equal "00:01:01.000")))
       (it "returns nil if no subtitle ID can be found."
         (with-temp-vtt-buffer
-         (expect (subed-subtitle-id) :to-equal nil))))
+         (expect (subed-subtitle-id) :to-equal nil)))
+      (it "handles extra attributes"
+          (with-temp-vtt-buffer
+           (insert "WEBVTT
+
+00:00:01.000 --> 00:00:02.000 align:start position:0%
+Hello world")
+           (expect (subed-subtitle-id) :to-equal "00:00:01.000"))))
     (describe "the subtitle ID at playback time"
       (it "returns subtitle ID if time is equal to start time."
         (with-temp-vtt-buffer

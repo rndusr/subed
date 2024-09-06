@@ -120,17 +120,17 @@ Use the format-specific function for MAJOR-MODE."
                (goto-char (match-end 0)))
           (goto-char (point-min)))
       (cond
-       ((looking-at (concat "\\(" subed-vtt--regexp-timestamp "\\) *--> *" subed-vtt--regexp-timestamp " *\n"))
+       ((looking-at (concat "\\(" subed-vtt--regexp-timestamp "\\) *--> *" subed-vtt--regexp-timestamp "\\(?:\s+.+\\)?\n"))
         ;; no ID, use the timestamp
         (point))
-       ((looking-at (concat "\\(.*\\)\n" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp " *\n"))
+       ((looking-at (concat "\\(.*\\)\n" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp "\\(?:\s+.+\\)?\n"))
         (point))
        ((looking-at "^NOTE[ \n]")
         ;; At a subtitle's comment; scan forward for the timestamp
         (if (re-search-forward
              (concat
               subed--regexp-separator
-              (concat "\\(.*\n\\)?\\(" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp "\\) *\n")) nil t)
+              (concat "\\(.*\n\\)?\\(" subed-vtt--regexp-timestamp " *--> *" subed-vtt--regexp-timestamp "\\)\\(?:\s+.+\\)?*\n")) nil t)
             (progn
               (goto-char (or (match-beginning 1) (match-beginning 2) (point)))
               (point))

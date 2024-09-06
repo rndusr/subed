@@ -361,6 +361,10 @@ of ~subed-mode~. The specific backend functions (ex:
 ~subed-srt--jump-to-subtitle-id~) are also deprecated in favor of
 using generic functions such as ~subed-jump-to-subtitle-id~.
 
+** Testing
+
+You'll need to install the =buttercup= and =package-lint= Emacs packages. You'll also need =GNU Make= so that you can work with Makefiles. To run the tests, use the command =make test=.
+
 ** Contributions
    Contributions would be really appreciated! subed conforms to the [[https://reuse.software/spec/][REUSE
    Specification]]; this means that every file has copyright and license
