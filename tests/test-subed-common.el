@@ -3651,9 +3651,7 @@ Baz.
        (subed-merge-region (point-min) (point-max))
        (expect (buffer-string) :to-equal "1
 00:01:01,000 --> 00:03:15,500
-Foo.
-Bar.
-Baz.
+Foo. Bar. Baz.
 ")))
     (it "merges some subtitles."
       (with-temp-srt-buffer
@@ -3662,8 +3660,7 @@ Baz.
        (subed-merge-region (point-min) (point))
        (expect (buffer-string) :to-equal "1
 00:01:01,000 --> 00:02:10,345
-Foo.
-Bar.
+Foo. Bar.
 
 3
 00:03:03,45 --> 00:03:15,5
@@ -3680,8 +3677,7 @@ Foo.
 
 2
 00:02:02,234 --> 00:03:15,500
-Bar.
-Baz.
+Bar. Baz.
 "))))
 
   (describe "Merging a region and setting the text"

@@ -1,11 +1,21 @@
 #+OPTIONS: toc:nil
 
 * subed news
+
+** Version 1.2.16 - 2024-10-06 - Sacha Chua
+
+- subed-merge-with-next separates subtitles
+  with spaces instead of newlines. If you prefer
+  it the other way (keeping line breaks), let me
+  know and we can make it an option.
+
+- subed-create-file regenerates IDs.
+
 ** Version 1.2.15 - 2024-09-06 - Sacha Chua
 
 - Bugfix: Handle extra attributes after VTT timestamps (for example, from YouTube VTTs).
   Thanks to Jeff Trull for reporting this!
-  
+
 ** Version 1.2.14 - 2024-07-05 - Sacha Chua
 
 - Bugfix: subed-waveform should now handle the

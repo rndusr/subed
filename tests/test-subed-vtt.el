@@ -1704,7 +1704,7 @@ This is another test here.
        (insert mock-vtt-data)
        (subed-jump-to-subtitle-text "00:02:02.234")
        (subed-merge-with-next)
-       (expect (subed-subtitle-text) :to-equal "Bar.\nBaz.")
+       (expect (subed-subtitle-text) :to-equal "Bar. Baz.")
        (expect (subed-subtitle-msecs-start) :to-equal 122234)
        (expect (subed-subtitle-msecs-stop) :to-equal 195500)))
 		(it "updates looping."

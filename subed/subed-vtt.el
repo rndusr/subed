@@ -358,7 +358,7 @@ Use the format-specific function for MAJOR-MODE."
               (setq new-end (subed-timestamp-to-msecs (match-string 0))))
             (subed-jump-to-subtitle-text)
             (delete-region pos (point))
-            (insert "\n")
+            (insert " ")
             (let ((subed-enforce-time-boundaries nil))
               (subed-set-subtitle-time-stop new-end))
             (run-hooks 'subed-subtitle-merged-hook))

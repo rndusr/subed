@@ -1542,7 +1542,7 @@ This is second subtitle.
        (insert mock-srt-data)
        (subed-jump-to-subtitle-text 2)
        (subed-merge-with-next)
-       (expect (subed-subtitle-text) :to-equal "Bar.\nBaz.")
+       (expect (subed-subtitle-text) :to-equal "Bar. Baz.")
        (expect (subed-subtitle-msecs-start) :to-equal 122234)
        (expect (subed-subtitle-msecs-stop) :to-equal 195500)))
     (it "handles lines that are all numbers."
@@ -1585,8 +1585,7 @@ This is the third subtitle.
 4
 00:00:03,000 --> 00:00:06,000
 This is the fourth subtitle.
-123456789
-This is the sixth subtitle."))))
+123456789 This is the sixth subtitle."))))
 
   (describe "A comment"
     (it "is validated."
