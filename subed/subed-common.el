@@ -2307,7 +2307,8 @@ If INIT-FUNC is non-nil, call that function to initialize."
       (subed-guess-format filename)
       (if init-func (funcall init-func))
       (subed-auto-insert)
-      (subed-append-subtitle-list subtitles))))
+      (subed-append-subtitle-list subtitles)
+      (subed-regenerate-ids))))
 
 (defun subed-convert (format &optional include-comments)
   "Create a buffer with the current subtitles converted to FORMAT.
@@ -2316,7 +2317,9 @@ INCLUDE-COMMENTS is non-nil or `subed-convert' is called with a
 prefix argument, include comments in TXT output."
   (interactive (list (completing-read "To format: " '("VTT" "SRT" "ASS" "TSV" "TXT"))
                      current-prefix-arg))
-  (let* ((subtitles (subed-subtitle-list))
+  (let* ((subtitles
+          (mapcar (lambda (sub) (cons nil (cdr sub))) ; remove ID
+                  (subed-subtitle-list)))
          (new-filename (concat (file-name-base (or (buffer-file-name) (buffer-name))) "."
                                (downcase format)))
          (mode-func (pcase format
@@ -2341,7 +2344,8 @@ prefix argument, include comments in TXT output."
       (when (functionp mode-func) (funcall mode-func) (subed-auto-insert))
       (if (string= format "TXT")
           (insert (subed-subtitle-list-text subtitles include-comments))
-        (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub))) subtitles))
+        (mapc (lambda (sub) (apply #'subed-append-subtitle nil (cdr sub)))
+              subtitles))
       (current-buffer))))
 
 ;;; Wdiff
