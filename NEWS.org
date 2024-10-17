@@ -2,6 +2,11 @@
 
 * subed news
 
+** Version 1.2.17 - 2024-10-17 - Sacha Chua
+
+- subed-word-data: Load JSON data from WhisperX.
+- Merging should not include the current subtitle if the point is at the beginning of the subtitle.
+
 ** Version 1.2.16 - 2024-10-06 - Sacha Chua
 
 - subed-merge-with-next separates subtitles

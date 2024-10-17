@@ -61,3 +61,6 @@ test-compile: compile clean
 
 test-emacs:
 	emacs -Q -L ./subed --eval "(require 'subed-autoloads)"
+
+watch:
+	nodemon -w subed -w tests -e el --exec make test

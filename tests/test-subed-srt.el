@@ -195,6 +195,18 @@ Baz.
          (insert "foo")
          (expect (subed-subtitle-relative-point) :to-equal nil)))
       )
+    (describe "the subtitle start position"
+      (it "returns the start from inside a subtitle."
+        (with-temp-srt-buffer
+         (insert mock-srt-data)
+         (re-search-backward "Bar")
+         (expect (subed-subtitle-start-pos) :to-equal 39)))
+      (it "returns the start from the beginning of the line."
+        (with-temp-srt-buffer
+         (insert mock-srt-data)
+         (re-search-backward "^2\n")
+         (expect (subed-subtitle-start-pos) :to-equal (point)))))
+
     )
   (describe "Converting to msecs"
     (it "works with numbers."

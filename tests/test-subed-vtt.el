@@ -36,12 +36,12 @@ Baz.
         (with-temp-vtt-buffer
          (expect (subed-subtitle-id) :to-equal nil)))
       (it "handles extra attributes"
-          (with-temp-vtt-buffer
-           (insert "WEBVTT
+        (with-temp-vtt-buffer
+         (insert "WEBVTT
 
 00:00:01.000 --> 00:00:02.000 align:start position:0%
 Hello world")
-           (expect (subed-subtitle-id) :to-equal "00:00:01.000"))))
+         (expect (subed-subtitle-id) :to-equal "00:00:01.000"))))
     (describe "the subtitle ID at playback time"
       (it "returns subtitle ID if time is equal to start time."
         (with-temp-vtt-buffer
@@ -172,7 +172,23 @@ Hello world")
          (insert "foo")
          (expect (subed-subtitle-relative-point) :to-equal nil)))
       )
-    )
+    (describe "the subtitle start position"
+      (it "returns the start from inside a subtitle."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (re-search-backward "Bar")
+         (expect (subed-subtitle-start-pos) :to-equal 45)))
+      (it "returns the start from the beginning of the line."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (re-search-backward "00:02:02\\.234")
+         (expect (subed-subtitle-start-pos) :to-equal 45)))
+      (it "returns the start of a comment"
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (re-search-backward "00:02:02\\.234")
+         (insert "NOTE\n\nThis is a comment\n\n")
+         (expect (subed-subtitle-start-pos) :to-equal 45)))))
   (describe "Converting to msecs"
     (it "works with numbers."
       (expect (with-temp-vtt-buffer (subed-to-msecs 5123)) :to-equal 5123))

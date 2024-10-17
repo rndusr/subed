@@ -204,6 +204,16 @@ Return nil if TIME-STRING doesn't match the pattern.")
   "Return the ID of the subtitle at MSECS milliseconds.
 Return nil if there is no subtitle at MSECS.")
 
+(subed-define-generic-function subtitle-start-pos (&optional sub-id)
+  "Return the position of the start of the subtitle.
+If SUB-ID is not given, use the current subtitle."
+  (interactive)
+  (save-excursion
+    (or
+     (subed-jump-to-subtitle-comment sub-id)
+     (subed-jump-to-subtitle-id sub-id))
+    (point)))
+
 (subed-define-generic-function jump-to-subtitle-start-pos (&optional sub-id)
   "Move to the beginning of a subtitle and return point.
 If SUB-ID is not given, focus the current subtitle.
@@ -1594,7 +1604,10 @@ Update the end timestamp accordingly."
   (interactive "r")
   (save-restriction
     (narrow-to-region (progn (goto-char beg) (or (subed-jump-to-subtitle-id) (point)))
-                      (progn (goto-char end) (or (subed-jump-to-subtitle-end) (point))))
+                      (progn (goto-char end)
+                             (if (= (point) (subed-subtitle-start-pos))
+                                 (point)
+                               (or (subed-jump-to-subtitle-end) (point)))))
     (goto-char beg)
     (while (save-excursion (subed-forward-subtitle-id))
       (subed-merge-with-next))))
@@ -2297,7 +2310,7 @@ If LIST is nil, use the subtitles in the current buffer."
   nil)
 
 (defun subed-create-file (filename subtitles &optional ok-if-exists init-func)
-  "Create FILENAME, set it to MODE, and prepopulate it with SUBTITLES.
+  "Create FILENAME and prepopulate it with SUBTITLES.
 If OK-IF-EXISTS is non-nil, overwrite existing files.
 If INIT-FUNC is non-nil, call that function to initialize."
   (when (and (file-exists-p filename) (not ok-if-exists))

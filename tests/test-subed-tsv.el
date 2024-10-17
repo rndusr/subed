@@ -28,22 +28,32 @@
       (it "returns nil if time can't be found."
         (with-temp-tsv-buffer
          (expect (subed-subtitle-msecs-start) :to-be nil)
-         (expect (subed-subtitle-msecs-stop) :to-be nil)))
-      )
+         (expect (subed-subtitle-msecs-stop) :to-be nil))))
+    (describe "the subtitle start position"
+      (it "returns the start from inside a subtitle."
+        (with-temp-tsv-buffer
+         (insert mock-tsv-data)
+         (re-search-backward "This is")
+         (expect (subed-subtitle-start-pos) :to-equal (line-beginning-position))))
+      (it "returns the start from the beginning of the line."
+        (with-temp-tsv-buffer
+         (insert mock-tsv-data)
+         (re-search-backward "14\\.0000")
+         (expect (subed-subtitle-start-pos) :to-equal (line-beginning-position)))))
     (describe "the subtitle text"
-      (describe "when text is empty"
-        (it "and at the beginning with a trailing newline."
+			(describe "when text is empty"
+				(it "and at the beginning with a trailing newline."
+					(with-temp-tsv-buffer
+					 (insert mock-tsv-data)
+					 (subed-jump-to-subtitle-text "14.000000")
+					 (kill-line)
+					 (expect (subed-subtitle-text) :to-equal "")))))
+      (describe "when text is not empty"
+        (it "and has no linebreaks."
           (with-temp-tsv-buffer
            (insert mock-tsv-data)
            (subed-jump-to-subtitle-text "14.000000")
-           (kill-line)
-           (expect (subed-subtitle-text) :to-equal "")))))
-    (describe "when text is not empty"
-      (it "and has no linebreaks."
-        (with-temp-tsv-buffer
-         (insert mock-tsv-data)
-         (subed-jump-to-subtitle-text "14.000000")
-         (expect (subed-subtitle-text) :to-equal "This is a test.")))))
+           (expect (subed-subtitle-text) :to-equal "This is a test.")))))
   (describe "Converting to msecs"
     (it "works with numbers, although these use seconds because that's what TSV uses."
       (expect (with-temp-tsv-buffer
@@ -378,6 +388,25 @@
              "11.120000\t14.000000\tHello, world!
 14.000000\t16.800000\tThis is a test.
 ")))
+  (describe "Merging"
+    (it "is limited to the region when at the start of the line."
+      (with-temp-tsv-buffer
+       (insert "5.673000	5.913000	phone
+5.953000	6.013000	to
+6.053000	6.213000	write
+6.253000	6.333000	the
+6.373000	6.713000	text,
+")
+       (goto-char (point-min))
+       (forward-line 3)
+       (subed-merge-region (point-min) (point))
+       (expect (buffer-string) :to-equal
+"5.673000	6.213000	phone to write
+6.253000	6.333000	the
+6.373000	6.713000	text,
+"
+               )
+       )))
   (describe "Converting msecs to timestamp"
     (it "uses the right format"
       (with-temp-tsv-buffer
