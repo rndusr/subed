@@ -23,7 +23,7 @@
 ;;; Commentary:
 
 ;; This file parses timing data such as the ones you get from YouTube
-;; .srv2 and tries to match the timing data with the remaining text in
+;; .srv2 or WhisperX JSON and tries to match the timing data with the remaining text in
 ;; the current subtitle in order to determine the word timestamp for
 ;; splitting the subtitle.
 
@@ -72,6 +72,35 @@ Return a list of ((start . ?), (end . ?) (text . ?))."
                    rec))
                text-elements))))
 
+(defun subed-word-data--extract-words-from-whisperx-json (file)
+  "Extract the timing from file in WhisperX's JSON format.
+Return a list of ((start . ?), (end . ?) (text . ?))."
+  (let* ((json-object-type 'alist)
+         (json-array-type 'list)
+         (data (json-read-file file))
+         (base (seq-mapcat
+								(lambda (segment)
+									(seq-map (lambda (info)
+														 (let-alist info
+															 `((start . ,(and .start (* 1000 .start)))
+                                 (end . ,(and .end (* 1000 .end)))
+																 (text . ,(and .word)))))
+													 (alist-get 'words segment)))
+								(alist-get 'segments data)))
+         last-end
+         current)
+		;; numbers at the end of a sentence sometimes don't end up with times
+		;; so we need to fix them
+    (while current
+			(unless (alist-get 'start (car current))						; start
+				(set-cdr (assoc 1 'start (car current)) (1+ last-end)))
+			(unless (alist-get 'end (car current))						; start
+				(set-cdr (assoc 1 'end (car current)) (1- (alist-get 'start (cadr current)))))
+			(setq
+			 last-end (alist-get 'end (car current))
+			 current (cdr current)))
+    base))
+
 (defun subed-word-data--load (data)
   "Load word-level timing from DATA.
 For now, only SRV2 files are supported."
@@ -82,9 +111,12 @@ For now, only SRV2 files are supported."
 ;;;###autoload
 (defun subed-word-data-load-from-file (file)
   "Load word-level timing from FILE.
-For now, only SRV2 files are supported."
+For now, only SRV2 and JSON files are supported."
   (interactive "fFile: ")
-  (subed-word-data--load (subed-word-data--extract-words-from-srv2 (xml-parse-file file))))
+  (subed-word-data--load
+   (if (string-match "\\.json\\'" file)
+       (subed-word-data--extract-words-from-whisperx-json file)
+     (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))))
 
 (defun subed-word-data-load-from-string (string)
   "Load word-level timing from STRING.
@@ -148,8 +180,8 @@ Return non-nil if they are the same after normalization."
            (words (if remaining-words
                       (reverse (seq-filter
                                 (lambda (o)
-                                  (and (<= (alist-get 'end o) end)
-                                       (>= (alist-get 'start o) start)
+                                  (and (or (not (alist-get 'end o)) (<= (alist-get 'end o) end))
+                                       (or (not (alist-get 'start o)) (>= (alist-get 'start o) start))
                                        (not (string-match "^\n*$" (alist-get 'text o)))))
                                 subed-word-data--cache))))
            (offset 0)
@@ -182,8 +214,8 @@ Return non-nil if they are the same after normalization."
         (stop (+ (subed-subtitle-msecs-stop) subed-subtitle-spacing)))
     (seq-filter
      (lambda (o)
-       (and (<= (alist-get 'end o) stop)
-            (>= (alist-get 'start o) start)
+       (and (<= (or (alist-get 'end o) most-positive-fixnum) stop)
+            (>= (or (alist-get 'start o) 0) start)
             (not (string-match "^\n*$" (alist-get 'text o)))))
      subed-word-data--cache)))
 
