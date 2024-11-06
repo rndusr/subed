@@ -344,6 +344,7 @@ Example:
 
 (defun subed-waveform-file-duration-ms (&optional filename)
   "Return the duration of FILENAME in milliseconds."
+  (setq filename (or filename (subed-media-file)))
   (cond
    (subed-waveform-file-duration-ms-cache
     (when (> subed-waveform-file-duration-ms-cache 0)
@@ -351,10 +352,12 @@ Example:
    (subed-waveform-ffprobe-executable
     (setq subed-waveform-file-duration-ms-cache
           (subed-waveform-ffprobe-duration-ms
-           (or filename (subed-media-file))))
-    (if (> subed-waveform-file-duration-ms-cache 0)
+           filename))
+    (if (and (numberp subed-waveform-file-duration-ms-cache)
+             (> subed-waveform-file-duration-ms-cache 0))
         subed-waveform-file-duration-ms-cache
       ;; mark as invalid
+      (warn "Could not get file duration for %s" filename)
       (setq subed-waveform-file-duration-ms-cache -1)
       nil))))
 
