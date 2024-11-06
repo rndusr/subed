@@ -1,6 +1,9 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.18 - 2024-11-06 - Sacha Chua
+
+- Bugfix: VTT: Ignore timestamp-like text at the start of subtitle cues.
 
 ** Version 1.2.17 - 2024-10-17 - Sacha Chua
 

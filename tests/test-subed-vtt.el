@@ -1342,6 +1342,12 @@ This is second subtitle.
        (forward-char 2)
        (subed-validate)
        (expect (point) :to-equal 77)))
+    (it "accepts cue text that starts with something that looks like a timestamp."
+      (with-temp-vtt-buffer
+       (insert "WebVTT\n\n00:00:00.003 --> 00:00:05.123\n12:00 is noon.\n\n00:10:00.003 --> 00:11:05.123\nThis should be fine.")
+       (subed-validate)
+       (expect (point) :to-equal (point-max))))
+
     )
 
   (describe "Sanitizing"

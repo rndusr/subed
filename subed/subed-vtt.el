@@ -422,8 +422,7 @@ Use the format-specific function for MAJOR-MODE."
     (atomic-change-group
       (let ((orig-point (point)))
         (goto-char (point-min))
-        (while (and (re-search-forward (format "^\\(%s\\)" subed--regexp-timestamp) nil t)
-                    (goto-char (match-beginning 1)))
+        (while (subed-forward-subtitle-id)
           ;; This regex is stricter than `subed--regexp-timestamp'
           (unless (looking-at "^\\([0-9]\\{2\\}:\\)?[0-9]\\{2\\}:[0-9]\\{2\\}\\(\\.[0-9]\\{0,3\\}\\)")
             (error "Found invalid start time: %S"  (substring (or (thing-at-point 'line :no-properties) "\n") 0 -1)))
