@@ -41,10 +41,16 @@
 (defvar-local subed-word-data--cache nil
   "Word-level timing in the form ((start . ms) (end . ms) (text . ms))")
 
+(defcustom subed-word-data-score-faces '((0.8 . compilation-info)
+                               (0.4 . compilation-warning)
+                               (0 . compilation-error))
+  "Alist of score thresholds and faces to use."
+  :type '(alist :key-type float :value-type face))
+
 (defface subed-word-data-face '((((class color) (background light))
-                                 :foreground "darkgreen")
-                                (((class color) (background dark))
-                                 :foreground "lightgreen"))
+                  :foreground "darkgreen")
+                 (((class color) (background dark))
+                  :foreground "lightgreen"))
   "Face used for words with word data available.")
 
 (defun subed-word-data--extract-words-from-srv2 (data)
@@ -72,19 +78,23 @@ Return a list of ((start . ?), (end . ?) (text . ?))."
                    rec))
                text-elements))))
 
-(defun subed-word-data--extract-words-from-whisperx-json (file)
+(defun subed-word-data--extract-words-from-whisperx-json (file &optional from-string)
   "Extract the timing from file in WhisperX's JSON format.
-Return a list of ((start . ?), (end . ?) (text . ?))."
+Return a list of ((start . ?), (end . ?) (text . ?) (score . ?)).
+If FROM-STRING is non-nil, treat FILE as the data itself."
   (let* ((json-object-type 'alist)
          (json-array-type 'list)
-         (data (json-read-file file))
+         (data (if from-string
+                   (json-read-from-string file)
+                 (json-read-file file)))
          (base (seq-mapcat
 								(lambda (segment)
 									(seq-map (lambda (info)
 														 (let-alist info
 															 `((start . ,(and .start (* 1000 .start)))
                                  (end . ,(and .end (* 1000 .end)))
-																 (text . ,(and .word)))))
+																 (text . ,(identity .word))
+                                 (score . ,(identity .score)))))
 													 (alist-get 'words segment)))
 								(alist-get 'segments data)))
          last-end
@@ -92,9 +102,9 @@ Return a list of ((start . ?), (end . ?) (text . ?))."
 		;; numbers at the end of a sentence sometimes don't end up with times
 		;; so we need to fix them
     (while current
-			(unless (alist-get 'start (car current))						; start
+			(unless (alist-get 'start (car current)) ; start
 				(set-cdr (assoc 1 'start (car current)) (1+ last-end)))
-			(unless (alist-get 'end (car current))						; start
+			(unless (alist-get 'end (car current)) ; start
 				(set-cdr (assoc 1 'end (car current)) (1- (alist-get 'start (cadr current)))))
 			(setq
 			 last-end (alist-get 'end (car current))
@@ -112,16 +122,26 @@ For now, only SRV2 files are supported."
 (defun subed-word-data-load-from-file (file)
   "Load word-level timing from FILE.
 For now, only SRV2 and JSON files are supported."
-  (interactive "fFile: ")
+  (interactive (list (read-file-name "JSON or srv2: "
+                                     nil
+                                     nil
+                                     nil
+                                     nil
+                                     (lambda (f)
+                                       (string-match
+                                        "\\.json\\'\\|\\.srv2\\'"
+                                        f)))))
   (subed-word-data--load
-   (if (string-match "\\.json\\'" file)
-       (subed-word-data--extract-words-from-whisperx-json file)
+   (if (and (stringp file) (string-match "\\.json\\'" file))
+       (subed-word-data--extract-words-from-whisperx-json file t)
      (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))))
 
 (defun subed-word-data-load-from-string (string)
   "Load word-level timing from STRING.
-For now, only SRV2 files are supported."
-  (subed-word-data--load (subed-word-data--extract-words-from-srv2 string)))
+For now, only JSON or SRV2 files are supported."
+  (subed-word-data--load (if (string-match "^{" string)
+              (subed-word-data--extract-words-from-whisperx-json string)
+              (subed-word-data--extract-words-from-srv2 string))))
 
 (defvar subed-word-data-extensions '(".en.srv2" ".srv2") "Extensions to search for word data.")
 
@@ -249,16 +269,30 @@ Return non-nil if they are the same after normalization."
             (setq candidate nil))
           (setq try-list (cdr try-list)))
         (when (and candidate (subed-word-data-compare (buffer-substring (point) pos)
-                                                      (alist-get 'text candidate)))
-          (add-text-properties (point) pos
-                               (list 'subed-word-data-start
-                                      (assoc-default 'start candidate)
-                                      'subed-word-data-end
-                                      (assoc-default 'end candidate)
-                                      'font-lock-face 'subed-word-data-face))
-          (add-face-text-property (point) pos
-                                  'subed-word-data-face)
+                                       (alist-get 'text candidate)))
+          (subed-word-data--add-word-properties (point) pos candidate)
           (setq word-data try-list))))))
+
+(defsubst subed-word-data--candidate-face (candidate)
+  "Return the face to use for CANDIDATE."
+  (if (and (alist-get 'score candidate)
+           subed-word-data-confidence-faces)
+      (cdr (seq-find (lambda (threshold) (>= (alist-get 'score candidate) (car threshold)))
+                     subed-word-data-score-faces))
+    subed-word-data-face))
+
+(defsubst subed-word-data--add-word-properties (start end candidate)
+  "Add properties from START to END for CANDIDATE."
+  (let ((face (subed-word-data--candidate-face candidate)))
+    (add-text-properties start end
+                         (list 'subed-word-data-start
+                               (assoc-default 'start candidate)
+                               'subed-word-data-end
+                               (assoc-default 'end candidate)
+                               'subed-word-data-score
+                               (assoc-default 'score candidate)
+                               'font-lock-face face))
+    (add-face-text-property start end face)))
 
 (defun subed-word-data-refresh-text-properties ()
   "Add word data properties and face when available."
@@ -284,19 +318,12 @@ Return non-nil if they are the same after normalization."
               (setq try-list (cdr try-list))
               (while (and candidate
                           (not (subed-word-data-compare (buffer-substring (point) pos)
-                                                        (alist-get 'text candidate))))
+                                         (alist-get 'text candidate))))
                 (setq candidate (car try-list))
                 (setq try-list (cdr try-list)))
               (when (and candidate (subed-word-data-compare (buffer-substring (point) pos)
-                                                            (alist-get 'text candidate)))
-                (add-text-properties (point) pos
-                                     (list 'subed-word-data-start
-                                            (assoc-default 'start candidate)
-                                            'subed-word-data-end
-                                            (assoc-default 'end candidate)
-                                            'font-lock-face 'subed-word-data-face))
-                (add-face-text-property (point) pos
-                                        'subed-word-data-face)
+                                             (alist-get 'text candidate)))
+                ( subed-word-data--add-word-properties (point) pos candidate)
                 (setq word-data try-list)))))
         (or (subed-forward-subtitle-id)
             (goto-char (point-max)))))))
