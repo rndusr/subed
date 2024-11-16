@@ -133,14 +133,14 @@ For now, only SRV2 and JSON files are supported."
                                         f)))))
   (subed-word-data--load
    (if (and (stringp file) (string-match "\\.json\\'" file))
-       (subed-word-data--extract-words-from-whisperx-json file t)
+       (subed-word-data--extract-words-from-whisperx-json file)
      (subed-word-data--extract-words-from-srv2 (xml-parse-file file)))))
 
 (defun subed-word-data-load-from-string (string)
   "Load word-level timing from STRING.
 For now, only JSON or SRV2 files are supported."
   (subed-word-data--load (if (string-match "^{" string)
-              (subed-word-data--extract-words-from-whisperx-json string)
+              (subed-word-data--extract-words-from-whisperx-json string t)
               (subed-word-data--extract-words-from-srv2 string))))
 
 (defvar subed-word-data-extensions '(".en.srv2" ".srv2") "Extensions to search for word data.")
