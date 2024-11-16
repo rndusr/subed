@@ -1,6 +1,11 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.19 - 2024-11-16 - Sacha Chua
+
+- subed-word-data.el: Enhancement: Show transcription confidence based on WhisperX JSON data.
+- subed-waveform.el: Bugfix: Handle files with invalid duration.
+
 ** Version 1.2.18 - 2024-11-06 - Sacha Chua
 
 - Bugfix: VTT: Ignore timestamp-like text at the start of subtitle cues.
