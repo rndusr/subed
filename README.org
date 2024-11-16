@@ -19,6 +19,9 @@ formats are:
 
 [[file:https://raw.githubusercontent.com/sachac/subed/master/screenshot.jpg]]
 
+#+CAPTION: With word data and waveforms
+[[file:word-data-and-waveform.png]]
+
 ** Features
 
 - Jump to next (~M-n~) and previous (~M-p~) subtitle text.
@@ -328,6 +331,12 @@ If you're using ~subed-waveform-show-current~ or ~subed-waveform-show-all~, you 
 To do this with the keyboard, you can use
 ~subed-shift-subtitles-to-start-at-timestamp~ if you want to specify a
 timestamp or ~subed-shift-subtitles~ to specify a millisecond offset.
+
+To use word timing data from something like
+WhisperX, load subed-word-data.el and then use
+~subed-word-data-load-from-file~. The word times
+will then be used when you split subtitles with
+~subed-split-subtitle~.
 
 *** Exporting text for review
 
