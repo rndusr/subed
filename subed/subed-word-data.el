@@ -279,7 +279,7 @@ Return non-nil if they are the same after normalization."
            subed-word-data-score-faces)
       (cdr (seq-find (lambda (threshold) (>= (alist-get 'score candidate) (car threshold)))
                      subed-word-data-score-faces))
-    subed-word-data-face))
+    'subed-word-data-face))
 
 (defsubst subed-word-data--add-word-properties (start end candidate)
   "Add properties from START to END for CANDIDATE."

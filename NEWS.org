@@ -1,7 +1,7 @@
 #+OPTIONS: toc:nil
 
 * subed news
-** Version 1.2.20 - 2024-11-17 - Sacha Chua
+** Version 1.2.20, 1.2.21 - 2024-11-17 - Sacha Chua
 
 - subed-word-data.el: Bugfix, whoops. I should write tests for this someday...
 
