@@ -324,7 +324,7 @@ Another way is to type as much of the text as you can without worrying
 about timestamps, putting each caption on a separate line. Then you
 can use ~subed-align~ to convert it into timestamped captions.
 
-*** Resynchronizing subtitles
+*** Timing / resynchronizing subtitles
 
 If you're using ~subed-waveform-show-current~ or ~subed-waveform-show-all~, you can use ~M-mouse-2~ (Meta-middle-click, ~subed-waveform-shift-subtitles~) to shift the current subtitle and succeeding subtitles so that they start at the position you clicked on.
 
@@ -337,6 +337,8 @@ WhisperX, load subed-word-data.el and then use
 ~subed-word-data-load-from-file~. The word times
 will then be used when you split subtitles with
 ~subed-split-subtitle~.
+
+Rodrigo Morales also has some functions for [[https://rodrigo.morales.pe/2024/11/17/my-subed-configuration-for-adding-subtitles-to-emacsconf-2024/][playing part of the subtitles and changing them by a little bit]].
 
 *** Exporting text for review
 
@@ -435,6 +437,8 @@ else:
 
 * Other resources
 
+- [[https://rodrigo.morales.pe/2024/11/17/my-subed-configuration-for-adding-subtitles-to-emacsconf-2024/][My subed customizations for editing captions of Emacsconf 2024 – Rodrigo Morales]]
+- [[https://sachachua.com/blog/category/subed][Sacha Chua's subed-related blog posts]]
 - [[https://mbork.pl/2023-09-18_Making_Anki_flashcards_from_subtitles][Marcin Borkowski: 2023-09-18 Making Anki flashcards from subtitles]]
 - [[https://github.com/sachac/subed-record][sachac/subed-record: Record audio in segments and compile it into a file]]
 - [[https://emacsconf.org/captioning/][EmacsConf -  Captioning tips]]
