@@ -1,6 +1,10 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.20 - 2024-11-17 - Sacha Chua
+
+- subed-word-data.el: Bugfix, whoops. I should write tests for this someday...
+
 ** Version 1.2.19 - 2024-11-16 - Sacha Chua
 
 - subed-word-data.el: Enhancement: Show transcription confidence based on WhisperX JSON data.

@@ -276,7 +276,7 @@ Return non-nil if they are the same after normalization."
 (defsubst subed-word-data--candidate-face (candidate)
   "Return the face to use for CANDIDATE."
   (if (and (alist-get 'score candidate)
-           subed-word-data-confidence-faces)
+           subed-word-data-score-faces)
       (cdr (seq-find (lambda (threshold) (>= (alist-get 'score candidate) (car threshold)))
                      subed-word-data-score-faces))
     subed-word-data-face))
