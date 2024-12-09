@@ -2403,5 +2403,23 @@ The wdiff program must be installed.  Set
 			(display-buffer (current-buffer)))
 		result))
 
+;;; Misc
+
+(defun subed-sum-time (&optional beg end)
+  "Display the total time of the subtitles.
+Does not yet take overlapping subtitles into account."
+  (interactive (list (and (region-active-p) (min (point) (mark)))
+                     (and (region-active-p) (max (point) (mark)))))
+  (let ((sum
+         (seq-reduce
+          ;; TODO: Handle overlapping subtitles
+          (lambda (prev val)
+            (+ prev (- (elt val 2) (elt val 1))))
+          (subed-subtitle-list beg end)
+          0)))
+    (when (called-interactively-p 'any)
+      (message "%s" (subed-msecs-to-timestamp sum)))
+    sum))
+
 (provide 'subed-common)
 ;;; subed-common.el ends here
