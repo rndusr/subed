@@ -44,7 +44,7 @@
 ;;; Parsing
 
 (defconst subed-vtt--regexp-timestamp "\\(\\([0-9]+\\):\\)?\\([0-9]+\\):\\([0-9]+\\)\\(?:\\.\\([0-9]+\\)\\)?")
-(defconst subed-vtt--regexp-separator "\\(?:[[:blank:]]*\n\\)+\\(?:NOTE[ \n]\\(?:.+?\n\\)+\n\\)*\n")
+(defconst subed-vtt--regexp-separator "\\(?:[[:blank:]]*\n\n+NOTE[ \n]\\(?:.+?\n\\)+\\)*\n\n+")
 (defconst subed-vtt--regexp-identifier
   ;; According to https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API
   ;; Cues can start with an identifier which is a non empty line that does

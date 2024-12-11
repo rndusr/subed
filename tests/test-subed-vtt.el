@@ -1711,7 +1711,19 @@ This is another test here.
          (insert mock-vtt-comments-data)
          (subed-append-subtitle)
          (expect (subed-backward-subtitle-comment) :not :to-be nil)
-         (expect (looking-at "NOTE ") :to-be t)))))
+         (expect (looking-at "NOTE ") :to-be t))))
+    (describe "when the cue text starts with Note"
+      (it "is not confused."
+        (with-temp-vtt-buffer
+         (insert "WEBVTT
+
+00:00:00.000 --> 00:00:00.999
+Note this is a test
+
+00:00:01.000 --> 00:00:01.000
+another test
+")
+         (expect (elt (car (subed-subtitle-list)) 3) :to-equal "Note this is a test")))))
   (describe "Merging with next subtitle"
     (it "throws an error in an empty buffer."
       (with-temp-vtt-buffer
