@@ -276,7 +276,8 @@ with a script or another subtitle file.
 *** Writing subtitles from scratch
 
 One way is to start with one big subtitle that covers the whole media
-file, and then split it using ~subed-split-subtitle~ (~M-.~).
+file. You can create this manually by using the media file duration or a very large ending timestamp (ex: 24:00:000), or you can use ~M-x subed-insert-subtitle-for-whole-file~.
+Use ~C-c C-p~ (~subed-toggle-pause-while-typing~) to enable pausing while typing. Start playback with ~M-SPC~ (~subed-mpv-toggle-pause~), type as you listen, and split using using ~subed-split-subtitle~ (~M-.~).
 
 Another way is to type as much of the text as you can without worrying
 about timestamps, putting each caption on a separate line. Then you
