@@ -2427,5 +2427,204 @@ Does not yet take overlapping subtitles into account."
       (message "%s" (subed-msecs-to-timestamp sum)))
     sum))
 
+;;; Experimental retiming workflow
+
+(defvar subed-retime-subtitles-adjustment-msecs 100
+  "Number of msecs to adjust the MPV playback position.
+This accounts for reaction time.")
+
+(defun subed-retime-set-stop-and-move-forward ()
+  "Set the current subtitle's stop time and the next subtitle's start time.
+Move to the next subtitle.
+Take into account `subed-subtitle-spacing' and
+`subed-retime-subtitles-adjustment-msecs'."
+  (interactive)
+  (subed-set-subtitle-time-stop
+   (- subed-mpv-playback-position subed-subtitle-spacing subed-retime-subtitles-adjustment-msecs))
+  (subed-forward-subtitle-text)
+  (subed-set-subtitle-time-start
+   (- subed-mpv-playback-position subed-retime-subtitles-adjustment-msecs)))
+
+(defun subed-retime-play-previous ()
+  "Go backward one subtitle and replay."
+  (interactive)
+  (subed-backward-subtitle-text)
+  (subed-mpv-jump-to-current-subtitle))
+
+(defun subed-retime-play-next ()
+  "Go backward one subtitle and replay."
+  (interactive)
+  (subed-forward-subtitle-text)
+  (subed-mpv-jump-to-current-subtitle))
+
+(defvar subed-retime-subtitles-map
+  (define-keymap
+    "SPC" #'subed-retime-set-stop-and-move-forward
+    "<left>" #'subed-mpv-jump-to-current-subtitle
+    "j" #'subed-mpv-jump-to-current-subtitle
+    "<right>" #'subed-retime-play-next
+    "b" #'subed-retime-play-previous
+    "f" #'subed-retime-play-next
+    "n" #'subed-retime-play-next
+    "p" #'subed-mpv-toggle-pause)
+  "Some shortcuts for subtitle retiming.")
+
+;;;###autoload
+(defun subed-retime-subtitles ()
+  "Set new stop times for subtitles by pressing SPC when the next subtitle starts."
+  (interactive)
+  (subed-disable-loop-over-current-subtitle)
+  (subed-mpv-unpause)
+  (subed-mpv-jump-to-current-subtitle)
+  (set-transient-map
+   subed-retime-subtitles-map t
+   nil
+   ;; todo: support substitute-command-keys
+   "SPC: set new stop, <left>: replay current, <right>: forward, (b)ack, (f)orward, (p)ause"))
+
+;;; ffprobe
+
+(defvar-local subed-file-duration-ms-cache nil
+  "If non-nil, duration of current file in milliseconds.")
+
+(defun subed-convert-ffprobe-tags-duration-to-ms (duration)
+  "Return milliseconds as an integer for DURATION.
+
+DURATION must be a string of the format HH:MM:SS.MMMM.
+
+Example:
+
+00:00:03.003000000 -> 3003
+00:00:03.00370000 -> 3004"
+  (unless (string-match "\\([0-9]\\{2\\}\\):\\([0-9]\\{2\\}\\):\\([0-9]\\{2\\}\\)\\.\\([0-9]+\\)" duration)
+    (error "The duration is not well formatted."))
+  (let ((hour (match-string 1 duration))
+        (minute (match-string 2 duration))
+        (seconds (match-string 3 duration))
+        (milliseconds (match-string 4 duration)))
+    (+
+     (* (string-to-number hour) 3600000)
+     (* (string-to-number minute) 60000)
+     (* (string-to-number seconds) 1000)
+     (* (string-to-number (concat "0." milliseconds)) 1000))))
+
+(defun subed-ffprobe-duration-ms (filename)
+  "Use ffprobe to get duration of audio stream in milliseconds of FILENAME."
+  (let ((json
+         (json-read-from-string
+          (with-temp-buffer
+            (call-process
+             subed-ffprobe-executable nil t nil
+             "-v" "error"
+             "-print_format" "json"
+             "-show_streams"
+             "-show_format"
+             filename)
+            (buffer-string)))))
+    ;; Check that the file has at least one audio stream.
+    (when (eq (seq-find
+               (lambda (stream)
+                 (equal (alist-get 'codec_type stream) "audio"))
+               (alist-get 'streams json))
+              0)
+      (error "The provided file doesn't have an audio stream."))
+    (cond
+     ;; If the file has one stream and it is an audio stream, we can
+     ;; get the duration from format=duration
+     ;;
+     ;; nb_streams equals the number of streams in the media file.
+     ((and (eq (alist-get 'nb_streams (alist-get 'format json)) 1)
+           (equal (alist-get
+                   'codec_type
+                   (seq-first (alist-get 'streams json)))
+                  "audio"))
+      (* 1000 (string-to-number
+               (alist-get 'duration (alist-get 'format json)))))
+     ;; If the file has more than one stream and only one audio
+     ;; stream, return the duration of the audio stream.
+     ((and (> (alist-get 'nb_streams (alist-get 'format json)) 1)
+           (eq (length (seq-filter
+                        (lambda (stream)
+                          (equal (alist-get 'codec_type stream) "audio"))
+                        (alist-get 'streams json)))
+               1))
+      (cond
+       ((or
+         (string-match "\\.mkv\\'" filename)
+         (string-match "\\.webm\\'" filename))
+        (subed-convert-ffprobe-tags-duration-to-ms
+         (alist-get
+          'DURATION
+          (alist-get
+           'tags
+           (seq-find
+            (lambda (stream)
+              (equal (alist-get 'codec_type stream) "audio"))
+            (alist-get 'streams json))))))
+       (t
+        (* 1000
+           (string-to-number
+            (alist-get
+             'duration
+             (seq-find
+              (lambda (stream)
+                (equal (alist-get 'codec_type stream) "audio"))
+              (alist-get 'streams json))))))))
+     ;; TODO: Some media files might have multiple audio streams
+     ;; (e.g. multiple languages). When the media file has multiple
+     ;; audio streams, prompt the user for the audio stream. The audio
+     ;; stream selected by the user must be stored in a buffer-local
+     ;; variable so that ffmpeg knows the audio stream from which the
+     ;; waveforms are created.
+     )))
+
+(defun subed-clear-file-duration-ms-cache (&rest _)
+  "Clear `subed-file-duration-ms-cache'."
+  (setq subed-file-duration-ms-cache nil))
+
+(defun subed-file-duration-ms (&optional filename refresh-cache)
+  "Return the duration of FILENAME in milliseconds."
+  (setq filename (or filename (subed-media-file)))
+  (if refresh-cache (setq subed-file-duration-ms-cache nil))
+  (cond
+   ((numberp subed-file-duration-ms-cache)
+    (when (> subed-file-duration-ms-cache 0)
+      subed-file-duration-ms-cache))
+   (subed-ffprobe-executable
+    (setq subed-file-duration-ms-cache
+          (subed-ffprobe-duration-ms
+           filename))
+    (if (and (numberp subed-file-duration-ms-cache)
+             (> subed-file-duration-ms-cache 0))
+        subed-file-duration-ms-cache
+      ;; mark as invalid
+      (warn "Could not get file duration for %s" filename)
+      (setq subed-file-duration-ms-cache -1)
+      nil))))
+
+(defun subed-insert-subtitle-for-whole-file ()
+  "Insert a subtitle that starts at 0 until the end of the current file.
+
+This might make it easier to type subtitles from scratch.  Use this
+function to start with a subtitle for the whole duration.  It may be a
+good idea to enable pausing while typing with
+`subed-toggle-pause-while-typing'.
+
+As you type each subtitle's worth of text, use `subed-split-subtitle'
+to start a new subtitle at the current playback position.
+
+If there is an error running `subed-ffprobe-executable' points to ffprobe,
+use one day as the duration instead."
+  (interactive)
+  (when (string= (string-trim (buffer-string)) "")
+    (subed-auto-insert))
+  (subed-append-subtitle
+   nil
+   0
+   (condition-case nil
+       (and (subed-media-file)
+            (subed-file-duration-ms (subed-media-file)))
+     (error (* 24 60 60 1000)))))
+
 (provide 'subed-common)
 ;;; subed-common.el ends here

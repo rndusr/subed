@@ -1723,7 +1723,8 @@ Note this is a test
 00:00:01.000 --> 00:00:01.000
 another test
 ")
-         (expect (elt (car (subed-subtitle-list)) 3) :to-equal "Note this is a test")))))
+         (let ((case-fold-search t))
+           (expect (elt (car (subed-subtitle-list)) 3) :to-equal "Note this is a test"))))))
   (describe "Merging with next subtitle"
     (it "throws an error in an empty buffer."
       (with-temp-vtt-buffer

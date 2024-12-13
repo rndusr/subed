@@ -228,6 +228,11 @@ doing so."
   "Remembers whether point-to-player was originally enabled by the user.
 Used when temporarily disabling point-to-player sync.")
 
+(defcustom subed-ffprobe-executable "ffprobe"
+  "Path to the FFprobe executable used for measuring file duration."
+  :type 'file
+  :group 'subed)
+
 (defcustom subed-mpv-socket-dir (concat (temporary-file-directory) "subed")
   "Path to Unix IPC socket that is passed to mpv's --input-ipc-server option."
   :type 'file

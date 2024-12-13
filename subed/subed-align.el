@@ -42,6 +42,69 @@ Ex: task_adjust_boundary_nonspeech_min=0.500|task_adjust_boundary_nonspeech_stri
 will remove silence and other non-speech spans.")
 
 ;;;###autoload
+(defun subed-align-region (audio-file beg end)
+  "Align just the given section."
+  (interactive
+   (list
+    (or
+     (subed-media-file)
+     (subed-guess-media-file subed-audio-extensions)
+     (read-file-name "Audio file: "))
+    (if (region-active-p) (min (point) (mark)) (point-min))
+    (if (region-active-p) (max (point) (mark)) (point-max))))
+  (let* ((format (cond
+									((derived-mode-p 'subed-vtt-mode) "VTT")
+									((derived-mode-p 'subed-srt-mode) "SRT")))
+         (temp-text-file
+          (make-temp-file "subed-align" nil ".txt"
+                          (subed-subtitle-list-text
+                           (subed-subtitle-list beg end))))
+				 (temp-file
+          (concat (make-temp-name "subed-align")
+                  "."
+                  (if (buffer-file-name)
+											(file-name-extension (buffer-file-name))
+										(downcase format))))
+				 (ignore-before (save-excursion
+													(goto-char beg)
+													(unless (subed-subtitle-msecs-start)
+														(subed-forward-subtitle-text))
+													(/ (subed-subtitle-msecs-start) 1000.0)))
+				 (process-length (save-excursion
+													 (goto-char end)
+													 (- (/ (subed-subtitle-msecs-stop) 1000.0)
+															ignore-before)))
+         results)
+    (unwind-protect
+        (progn
+          (apply
+           #'call-process
+           (car subed-align-command)
+           nil
+           (get-buffer-create "*subed-aeneas*")
+           t
+           (append (cdr subed-align-command)
+                   (list (expand-file-name audio-file)
+                         temp-text-file
+                         (format "is_audio_file_head_length=%.3f|is_audio_file_process_length=%.3f|task_language=%s|os_task_file_format=%s|is_text_type=%s%s"
+                                 ignore-before
+                                 process-length
+                                 subed-align-language
+                                 (downcase format)
+                                 "plain"
+                                 (if subed-align-options (concat "|" subed-align-options) ""))
+                         temp-file)))
+          ;; parse the subtitles from the resulting output
+          (setq results (subed-parse-file temp-file))
+          (save-excursion
+            (subed-for-each-subtitle beg end nil
+              (let ((current (pop results)))
+                (subed-set-subtitle-time-start (elt current 1))
+                (subed-set-subtitle-time-stop (elt current 2))))))
+      (delete-file temp-text-file)
+      (delete-file temp-file))))
+
+;;;###autoload
 (defun subed-align (audio-file text-file format)
   "Align AUDIO-FILE with TEXT-FILE to get timestamps in FORMAT.
 Return the new filename."
