@@ -39,6 +39,8 @@
 (require 'subed-common)
 (require 'subed-mpv)
 
+(declare-function tramp-tramp-file-p "tramp")
+
 (defconst subed-mpv-frame-step-map
   (let ((map (make-sparse-keymap)))
     (define-key map "." #'subed-mpv-frame-step)

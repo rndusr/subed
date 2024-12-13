@@ -87,12 +87,12 @@
 
 (defcustom subed-video-extensions '("mkv" "mp4" "webm" "avi" "ts" "ogv" "mov")
   "Video file name extensions."
-  :type 'list
+  :type '(repeat string)
   :group 'subed)
 
 (defcustom subed-audio-extensions '("wav" "ogg" "mp3" "opus" "m4a")
   "Audio file name extensions."
-  :type 'list
+  :type '(repeat string)
   :group 'subed)
 
 (define-obsolete-variable-alias 'subed-auto-find-video 'subed-auto-play-media "1.20")
@@ -161,11 +161,11 @@ If set to zero or smaller, playback is paused."
 
 (defcustom subed-enforce-time-boundaries 'adjust
   "How to manage changes that cause overlapping subtitles or negative durations.
-- 'adjust means adjust the stop or start time of the current subtitle to
+- `adjust' means adjust the stop or start time of the current subtitle to
   keep duration >= 0, and adjust the previous or next subtitle as needed
   to maintain `subed-subtitle-spacing'.
-- 'clip means limit the change to the maximum it can be within the boundaries.
-- 'error means report an error if there will be overlaps or negative duration.
+- `clip' means limit the change to the maximum it can be within the boundaries.
+- `error' means report an error if there will be overlaps or negative duration.
 - nil means perform the change without checking.
 
 Other values aside from the ones specified above will be treated as nil."

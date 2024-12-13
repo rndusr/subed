@@ -33,6 +33,7 @@
 (require 'subed-mpv)
 
 (declare-function subed-tsv-mode "subed-tsv" ())
+(declare-function subed-guess-format "subed" (&optional filename))
 
 ;;; Generic functions and variables
 
@@ -102,8 +103,8 @@ subtitles) as long the subtitle IDs don't change."
              ;; exact original position
              (condition-case nil
                  (forward-char sub-pos)
-               ('beginning-of-buffer nil)
-               ('end-of-buffer nil)))
+               (beginning-of-buffer nil)
+               (end-of-buffer nil)))
          (goto-char pos)))))
 
 (defmacro subed-for-each-subtitle (beg end reverse &rest body)
@@ -252,6 +253,7 @@ Return point or nil if a the subtitle's text can't be found."
 If SUB-ID is not given, use subtitle on point.
 Return point or nil if a the subtitle's comment can't be found."
   (interactive)
+  (ignore sub-id)
   nil)
 
 (subed-define-generic-function jump-to-subtitle-end (&optional sub-id)
@@ -425,10 +427,11 @@ If SUB-ID is not given, set the text of the current subtitle."
   "Return subtitle comment or nil if none."
   nil)
 
-(subed-define-generic-function set-subtitle-comment (comment &optional _)
+(subed-define-generic-function set-subtitle-comment (comment)
   "Set the current subtitle's comment to COMMENT.
 If COMMENT is nil or the empty string, remove the comment."
   (interactive "MComment: ")
+  (ignore comment)
   (error "Not implemented"))
 
 (subed-define-generic-function set-subtitle-time-start (msecs
@@ -439,14 +442,14 @@ If COMMENT is nil or the empty string, remove the comment."
 
 If SUB-ID is not given, set the start of the current subtitle.
 
-If `subed-enforce-time-boundaries' is set to 'adjust, adjust the
+If `subed-enforce-time-boundaries' is set to `adjust', adjust the
 current subtitle's stop time to avoid negative durations (unless
-IGNORE-NEGATIVE-DURATION is non-nil) and adjust the previous
-subtitle's stop time to maintain `subed-subtitle-spacing' (unless
-IGNORE-OVERLAP is non-nil) if needed.  If
-`subed-enforce-time-boundaries' is set to 'error, throw an error
-in those cases.  If `subed-enforce-time-boundaries' is nil, make
-the changes without checking.
+IGNORE-NEGATIVE-DURATION is non-nil) and adjust the previous subtitle's
+stop time to maintain `subed-subtitle-spacing' (unless IGNORE-OVERLAP is
+non-nil) if needed.  If `subed-enforce-time-boundaries' is set to
+`error', throw an error in those cases.  If
+`subed-enforce-time-boundaries' is nil, make the changes without
+checking.
 
 Return the new subtitle start time in milliseconds."
   (save-excursion
@@ -516,12 +519,12 @@ Return the new subtitle start time in milliseconds."
 
 If SUB-ID is not given, set the stop of the current subtitle.
 
-If `subed-enforce-time-boundaries' is set to 'adjust, adjust the
+If `subed-enforce-time-boundaries' is set to `adjust', adjust the
 current subtitle's start time to avoid negative durations (unless
 IGNORE-NEGATIVE-DURATION is non-nil) and adjust the next
 subtitle's start time to maintain
 `subed-subtitle-spacing' (unless IGNORE-OVERLAP is non-nil) if
-needed.  If `subed-enforce-time-boundaries' is set to 'error,
+needed.  If `subed-enforce-time-boundaries' is set to `error',
 throw an error in those cases.  If
 `subed-enforce-time-boundaries' is nil, make the changes without
 checking.
@@ -677,7 +680,8 @@ If BEG and END are not specified, use the whole buffer."
 
 (defun subed-append-subtitle-list (subtitles)
   "Append SUBTITLES.
-SUBTITLES should be a list with entries of the form (id start stop text comment)."
+SUBTITLES should be a list with entries of the form (id start stop text
+ comment)."
   (mapc (lambda (sub) (apply #'subed-append-subtitle sub)) subtitles))
 
 (defun subed-subtitle-list-text (subtitles &optional include-comments)
@@ -1212,7 +1216,7 @@ or `subed-shift-subtitle-backward'."
       (subed-mpv-jump (subed-subtitle-msecs-start)))))
 
 (defun subed-move-subtitles-to-start-at-timestamp (timestamp &optional beg end)
-  "Move subtitles between BEG and END so that the current subtitle starts at TIMESTAMP.
+  "Move subtitles between BEG and END to start at TIMESTAMP.
 If END is nil, move all subtitles from BEG to end of buffer.
 If BEG is nil, move only the current subtitle.
 After subtitles are moved, replay the first moved subtitle if
@@ -1272,7 +1276,8 @@ See `subed-move-subtitle-forward' about ARG."
 
 (defun subed-shift-subtitles (&optional arg)
   "Move this and following subtitles by ARG milliseconds.
-To shift to a specific timestamp, use `subed-shift-subtitles-to-start-at-timestamp'."
+To shift to a specific timestamp, use
+`subed-shift-subtitles-to-start-at-timestamp'."
   (interactive (list (if current-prefix-arg
                          (prefix-numeric-value current-prefix-arg)
                        (read-number "Milliseconds: "))))
@@ -1281,9 +1286,10 @@ To shift to a specific timestamp, use `subed-shift-subtitles-to-start-at-timesta
     (subed-move-subtitles msecs (point))))
 
 (defun subed-shift-subtitles-to-start-at-timestamp (timestamp)
-  "Move this and following subtitles so that the current one starts at TIMESTAMP.
-To shift by a millisecond offset, use `subed-shift-subtitles'.
-If TIMESTAMP is a number or a numeric string, treat it as the time in milliseconds."
+  "Move this and following subtitles to  starts at TIMESTAMP.
+To shift by a millisecond offset, use `subed-shift-subtitles'.  If
+TIMESTAMP is a number or a numeric string, treat it as the time in
+milliseconds."
   (interactive (list (read-string "New start: ")))
   (subed-shift-subtitles (- (subed-to-msecs timestamp) (subed-subtitle-msecs-start))))
 

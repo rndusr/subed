@@ -327,17 +327,16 @@ TEXT defaults to an empty string.
 
 Move point to the text of the inserted subtitle.  Return new
 point.  Use the format-specific function for MAJOR-MODE."
-  (let ((pos (point)))
-    (unless (or (subed-forward-subtitle-comment) (subed-forward-subtitle-id))
-      ;; Point is on last subtitle or buffer is empty
-      (subed-jump-to-subtitle-end)
-      (when (looking-at "[[:space:]]+")
-        (replace-match ""))
-      ;; Moved point to end of last subtitle; ensure separator exists
-      (while (not (looking-at "\\(\\`\\|[[:blank:]]*\n[[:blank:]]*\n\\)"))
-        (save-excursion (insert ?\n)))
-      ;; Move to end of separator
-      (goto-char (match-end 0))))
+  (unless (or (subed-forward-subtitle-comment) (subed-forward-subtitle-id))
+    ;; Point is on last subtitle or buffer is empty
+    (subed-jump-to-subtitle-end)
+    (when (looking-at "[[:space:]]+")
+      (replace-match ""))
+    ;; Moved point to end of last subtitle; ensure separator exists
+    (while (not (looking-at "\\(\\`\\|[[:blank:]]*\n[[:blank:]]*\n\\)"))
+      (save-excursion (insert ?\n)))
+    ;; Move to end of separator
+    (goto-char (match-end 0)))
   (insert (subed-make-subtitle id start stop text comment))
   (unless (eolp)
     ;; Complete separator with another newline unless we inserted at the end
