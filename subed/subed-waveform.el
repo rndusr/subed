@@ -250,10 +250,6 @@ WIDTH and HEIGHT are given in pixels."
 (make-obsolete 'subed-waveform-file-duration-ms 'subed-file-duration-ms "1.2.22")
 (make-obsolete 'subed-waveform-clear-file-duration-ms-cache 'subed-clear-file-duration-ms-cache "1.2.22")
 
-;; This should eventually be replaced with a hook.
-(with-eval-after-load 'subed-mpv
-  (advice-add 'subed-mpv-play-from-file :after 'subed-waveform-clear-file-duration-ms-cache))
-
 (defun subed-waveform--from-file (filename from to width height)
   "Returns a string representing the image data in PNG format.
 FILENAME is the input file, FROM and TO are time positions, WIDTH

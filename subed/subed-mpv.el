@@ -402,6 +402,9 @@ hosting providers."
   (setq subed-mpv-media-file url)
   (subed-mpv--play url))
 
+(defvar subed-mpv-play-from-file-hook nil "Functions to run after a media file is loaded.
+Called with FILE as argument.")
+
 (defun subed-mpv-play-from-file (file)
   "Open FILE in mpv.
 
@@ -409,7 +412,10 @@ Files are expected to have any of the extensions listed in
 `subed-video-extensions' or `subed-audio-extensions'."
   (interactive (list (read-file-name "Find media: " nil nil t nil #'subed-mpv--is-media-file-p)))
   (setq subed-mpv-media-file (expand-file-name file))
-  (subed-mpv--play (expand-file-name file)))
+  (subed-clear-file-duration-ms-cache)
+  (subed-mpv--play (expand-file-name file))
+  (run-hook-with-args subed-mpv-play-from-file-hook))
+
 (define-obsolete-function-alias 'subed-mpv-find-video 'subed-mpv-play-from-file "1.20")
 
 (defun subed-mpv--add-subtitle-after-first-save ()
