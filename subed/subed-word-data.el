@@ -274,6 +274,12 @@ Return non-nil if they are the same after normalization."
           (subed-word-data--add-word-properties (point) pos candidate)
           (setq word-data try-list))))))
 
+(defun subed-word-data-refresh-region (beg end)
+  "Refresh text properties in region."
+  (when subed-word-data--cache
+    (subed-for-each-subtitle beg end nil
+      (subed-word-data-refresh-text-properties-for-subtitle))))
+
 (defsubst subed-word-data--candidate-face (candidate)
   "Return the face to use for CANDIDATE."
   (if (and (alist-get 'score candidate)
@@ -360,5 +366,10 @@ Requires the text properties to be set."
                     max-pause pause)))
         (setq last-start-time nil)))
     (goto-char max-pos)))
+
+(with-eval-after-load 'subed-align
+  (add-hook 'subed-align-region-hook #'subed-word-data-refresh-region))
+
+
 (provide 'subed-word-data)
 ;;; subed-word-data.el ends here

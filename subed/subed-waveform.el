@@ -206,6 +206,9 @@ rounded to the nearest multiple of this number."
     (remove-hook 'subed-subtitle-merged-hook 'subed-waveform-subtitle-merged t)
     (remove-hook 'subed-subtitles-sorted-hook 'subed-waveform-refresh t)))
 
+(with-eval-after-load 'subed-align
+  (add-hook 'subed-align-region-hook #'subed-waveform-refresh-after-realigning))
+
 (defconst subed-waveform-volume-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-=") #'subed-waveform-volume-increase)
@@ -294,7 +297,7 @@ and HEIGHT are dimensions in pixels."
 (defun subed-waveform--image-parameters (&optional width height)
   "Return a plist of media-file, start, stop, width, height.
 Use WIDTH and HEIGHT if specified."
-  (let* ((duration (subed-waveform-file-duration-ms (subed-media-file)))
+  (let* ((duration (subed-file-duration-ms (subed-media-file)))
          (start (floor (max 0 (- (subed-subtitle-msecs-start) subed-waveform-preview-msecs-before))))
          (stop
           (min
@@ -401,7 +404,7 @@ If POSITION is nil, remove the bar."
   (setq overlay (or overlay (subed-waveform--get-current-overlay)))
   (let* ((start (subed-subtitle-msecs-start))
          (stop (min (subed-subtitle-msecs-stop)
-                    (or (subed-waveform-file-duration-ms) most-positive-fixnum)))
+                    (or (subed-file-duration-ms) most-positive-fixnum)))
          (start-pos (subed-waveform--position-to-percent
                      start
                      (overlay-get overlay 'waveform-start)
@@ -489,6 +492,7 @@ times per second."
     (setq subed-waveform--update-timer
           (run-with-idle-timer 0 nil 'subed-waveform-put-svg))))
 
+(defalias 'subed-waveform-refresh-current-subtitle #'subed-waveform-put-svg)
 (defun subed-waveform-put-svg (&rest _)
   "Put or update an overlay with the SVG in the current subtitle.
 Set the relevant variables if necessary.
@@ -505,13 +509,25 @@ This function ignores arguments and can be used in hooks."
           (when overlay (delete-overlay overlay))
           (setq overlay (subed-waveform--make-overlay)))))))
 
-(defun subed-waveform-add-to-all ()
-  "Update all subtitles with overlays."
-  (interactive)
-  (remove-overlays (point-min) (point-max) 'subed-waveform t)
-  (subed-for-each-subtitle (point-min) (point-max) nil
+(defun subed-waveform-add-to-all (&optional beg end)
+  "Update subtitles from BEG to END."
+  (interactive (list (if (region-active-p) (min (point) (mark)))
+                     (if (region-active-p) (max (point) (mark)))))
+  (setq beg (or beg (point-min)))
+  (setq end (or end (point-max)))
+  (remove-overlays beg end 'subed-waveform t)
+  (subed-for-each-subtitle beg end nil
     (subed-jump-to-subtitle-text)
     (subed-waveform--make-overlay)))
+
+(defun subed-waveform-refresh-after-realigning (beg end)
+  "Refresh waveforms after modifying region."
+  (when subed-waveform-minor-mode
+    (save-excursion
+      (if subed-waveform-show-all
+          (subed-waveform-add-to-all beg end)
+        (subed-waveform-remove)
+        (subed-waveform-put-svg)))))
 
 (defun subed-waveform-refresh ()
   "Add all waveforms or just the current one.

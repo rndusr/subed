@@ -41,6 +41,9 @@
 Ex: task_adjust_boundary_nonspeech_min=0.500|task_adjust_boundary_nonspeech_string=REMOVE
 will remove silence and other non-speech spans.")
 
+(defvar subed-align-region-hook nil "Functions to run after realigning a region.
+Each function will be called with BEG and END.")
+
 ;;;###autoload
 (defun subed-align-region (audio-file beg end)
   "Align just the given section."
@@ -55,10 +58,11 @@ will remove silence and other non-speech spans.")
   (let* ((format (cond
 									((derived-mode-p 'subed-vtt-mode) "VTT")
 									((derived-mode-p 'subed-srt-mode) "SRT")))
-         (temp-text-file
+         (input-mode major-mode)
+         (input-subtitles (subed-subtitle-list beg end))
+         (temp-input-file
           (make-temp-file "subed-align" nil ".txt"
-                          (subed-subtitle-list-text
-                           (subed-subtitle-list beg end))))
+                          (mapconcat (lambda (o) (elt o 3)) input-subtitles "\n\n")))
 				 (temp-file
           (concat (make-temp-name "subed-align")
                   "."
@@ -85,13 +89,13 @@ will remove silence and other non-speech spans.")
            t
            (append (cdr subed-align-command)
                    (list (expand-file-name audio-file)
-                         temp-text-file
+                         temp-input-file
                          (format "is_audio_file_head_length=%.3f|is_audio_file_process_length=%.3f|task_language=%s|os_task_file_format=%s|is_text_type=%s%s"
                                  ignore-before
                                  process-length
                                  subed-align-language
                                  (downcase format)
-                                 "plain"
+                                 "subtitles"
                                  (if subed-align-options (concat "|" subed-align-options) ""))
                          temp-file)))
           ;; parse the subtitles from the resulting output
@@ -100,8 +104,9 @@ will remove silence and other non-speech spans.")
             (subed-for-each-subtitle beg end nil
               (let ((current (pop results)))
                 (subed-set-subtitle-time-start (elt current 1))
-                (subed-set-subtitle-time-stop (elt current 2))))))
-      (delete-file temp-text-file)
+                (subed-set-subtitle-time-stop (elt current 2)))))
+          (run-hook-with-args 'subed-align-region-hook beg end))
+      (delete-file temp-input-file)
       (delete-file temp-file))))
 
 ;;;###autoload
