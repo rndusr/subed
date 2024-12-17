@@ -2616,7 +2616,7 @@ good idea to enable pausing while typing with
 As you type each subtitle's worth of text, use `subed-split-subtitle'
 to start a new subtitle at the current playback position.
 
-If there is an error running `subed-ffprobe-executable' points to ffprobe,
+If there is an error running `subed-ffprobe-executable',
 use one day as the duration instead."
   (interactive)
   (when (string= (string-trim (buffer-string)) "")
@@ -2628,6 +2628,103 @@ use one day as the duration instead."
        (and (subed-media-file)
             (subed-file-duration-ms (subed-media-file)))
      (error (* 24 60 60 1000)))))
+
+(defun subed-crop-subtitles (beg end)
+  "Crop subtitles to region.
+Delete subtitles before and after the region (including outside any
+narrowing) and shift subtitles to start at 0."
+  (interactive (list (if (region-active-p)
+												 (min (point) (mark))
+											 (point-min))
+										 (if (region-active-p)
+												 (max (point) (mark))
+											 (point-max))))
+  (save-restriction
+    (widen)
+    (goto-char end)
+    (subed-jump-to-subtitle-end)
+    (delete-region (point) (point-max))
+    (goto-char (point-min))
+    (unless (subed-subtitle-msecs-start)
+      (subed-forward-subtitle-start-pos))
+    (delete-region (point) beg)
+    (subed-shift-subtitles-to-start-at-timestamp 0)))
+
+(defun subed-crop-media-file (beg end &optional new-file)
+	"Crop media file to the specified region using ffmpeg.
+This reencodes the media file if the starting time is not 0.
+Use the start time of the first subtitle in the region
+and the stop time of the last subtitle.
+
+Call with \\[universal-argument] to prompt for a file to write
+the extracted segment to.
+
+Adjusted subtitles will also be written alongside the file."
+	(interactive (list (if (region-active-p)
+												 (min (point) (mark))
+											 (point-min))
+										 (if (region-active-p)
+												 (max (point) (mark))
+											 (point-max))
+                     (when current-prefix-arg
+                       (read-file-name "New file: "))))
+	(unless (subed-media-file) (error "Must have associated media file"))
+	(let* ((start-ms (save-excursion
+										 (goto-char beg)
+										 (or (subed-subtitle-msecs-start)
+												 (and
+												  (subed-forward-subtitle-time-start)
+												  (subed-subtitle-msecs-start)))))
+				 (stop-ms (save-excursion
+									  (goto-char end)
+									  (or (subed-subtitle-msecs-stop)
+											  (and
+												 (subed-backward-subtitle-time-start)
+												 (subed-subtitle-msecs-stop)))))
+				 (input (subed-media-file))
+         (input-mode major-mode)
+         (input-subtitle-file (buffer-file-name))
+         (subtitles (mapcar (lambda (cue)
+                              (setf (elt cue 1) (- (elt cue 1) start-ms))
+                              (setf (elt cue 2) (- (elt cue 2) start-ms))
+                              cue)
+                            (subed-subtitle-list beg end)))
+				 (temp-file (make-temp-file "subed-record-crop" nil
+																	  (concat "."
+																					  (file-name-extension
+																						 input)))))
+		(unless (and start-ms stop-ms)
+			(error "Could not find start and stop time"))
+		(let ((args (append
+								 (list "-i" input)
+								 (if (> start-ms 0)
+										 (list "-ss" (number-to-string  (/ start-ms 1000.0)))
+									 nil)
+								 (list "-to" (number-to-string (/ stop-ms 1000.0)))
+								 (list "-y" "-c:a" "copy" temp-file))))
+			(with-current-buffer (get-buffer-create "*subed-record*")
+				(erase-buffer)
+				(apply #'call-process subed-ffmpeg-executable nil t t args))
+			(when (= (file-attribute-size (file-attributes temp-file)) 0)
+				(error "Error processing media file"))
+			(rename-file temp-file (or new-file input) t)
+      (cond
+       ((and new-file input-subtitle-file)
+        ;; file
+        (with-temp-file (concat (file-name-sans-extension temp-file) "."
+                                (file-name-extension input-subtitle-file))
+          (funcall input-mode)
+          (subed-auto-insert)
+          (subed-append-subtitle-list subtitles)))
+       (new-file
+        ;; temporary buffer?
+        (with-current-buffer (generate-new-buffer "*subed*")
+          (funcall input-mode)
+          (subed-auto-insert)
+          (subed-append-subtitle-list subtitles)))
+       (nil
+        ;; clean up current buffer
+        (subed-crop-subtitles beg end))))))
 
 (provide 'subed-common)
 ;;; subed-common.el ends here
