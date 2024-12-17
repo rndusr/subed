@@ -1291,7 +1291,10 @@ To shift by a millisecond offset, use `subed-shift-subtitles'.  If
 TIMESTAMP is a number or a numeric string, treat it as the time in
 milliseconds."
   (interactive (list (read-string "New start: ")))
-  (subed-shift-subtitles (- (subed-to-msecs timestamp) (subed-subtitle-msecs-start))))
+  (subed-shift-subtitles (- (subed-to-msecs timestamp)
+                            (or (subed-subtitle-msecs-start)
+                                (and (subed-forward-subtitle-time-start)
+                                     (subed-subtitle-msecs-start))))))
 
 (defun subed-shift-subtitle-forward (&optional arg)
   "Shift subtitle `subed-milliseconds-adjust' forward.

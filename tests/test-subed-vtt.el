@@ -901,6 +901,25 @@ This is second subtitle.
        (expect (save-excursion (subed-jump-to-subtitle-time-start)
                                (thing-at-point 'line))
                :to-equal "01:02:03.004 --> 02:03:04.060\n"))))
+  (describe "Shifting subtitles"
+    (describe "starting at a specific timestamp"
+      (it "works when called from the start of the buffer."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (goto-char (point-min))
+         (subed-shift-subtitles-to-start-at-timestamp 500)
+         (let ((data (subed-subtitle-list)))
+           (expect (elt (elt (subed-subtitle-list) 0) 1) :to-equal 500)
+           (expect (elt (elt (subed-subtitle-list) 0) 2) :to-equal 4623)
+           (expect (elt (elt (subed-subtitle-list) 2) 1) :to-equal 122950))))
+      (it "only affects the current and following subtitles."
+        (with-temp-vtt-buffer
+         (insert mock-vtt-data)
+         (re-search-backward "^Bar")
+         (subed-shift-subtitles-to-start-at-timestamp 120000)
+         (let ((data (subed-subtitle-list)))
+           (expect (elt (elt (subed-subtitle-list) 0) 1) :to-equal 61000)
+           (expect (elt (elt (subed-subtitle-list) 1) 1) :to-equal 120000))))))
 
   (describe "Inserting a subtitle"
     (describe "in an empty buffer"
