@@ -128,9 +128,10 @@ For now, only SRV2 and JSON files are supported."
                                      nil
                                      nil
                                      (lambda (f)
-                                       (string-match
-                                        "\\.json\\'\\|\\.srv2\\'"
-                                        f)))))
+                                       (or (file-directory-p f)
+                                           (string-match
+                                            "\\.json\\'\\|\\.srv2\\'"
+                                            f))))))
   (subed-word-data--load
    (if (and (stringp file) (string-match "\\.json\\'" file))
        (subed-word-data--extract-words-from-whisperx-json file)
