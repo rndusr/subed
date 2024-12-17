@@ -367,6 +367,69 @@ Requires the text properties to be set."
         (setq last-start-time nil)))
     (goto-char max-pos)))
 
+(defun subed-word-data-fix-subtitle-timing (beg end)
+  "Sets subtitle starts and stops based on the word data.
+Assumes words haven't been edited."
+  (interactive (list (if (region-active-p) (min (point) (mark)))
+                     (if (region-active-p) (max (point) (mark)))))
+  (setq beg (or beg (point-min)))
+  (setq end (if end (save-excursion
+                      (goto-char end)
+                      (subed-jump-to-subtitle-end)
+                      (point))
+              (point-max)))
+  (goto-char beg)
+  (if (subed-subtitle-msecs-start)
+      (subed-jump-to-subtitle-text)
+    (subed-forward-subtitle-text))
+  (let* ((start-ms (save-excursion
+                     (goto-char beg)
+                     (or (subed-subtitle-msecs-start)
+                         (progn
+                           (subed-forward-subtitle-time-start)
+                           (subed-subtitle-msecs-start)))))
+         (data (seq-drop-while
+                (lambda (o)
+                  (< (or (alist-get 'start o) 0)
+                     start-ms))
+                subed-word-data--cache))
+				 min-distance
+				 current-distance
+				 current-sub
+				 num-words
+				 candidate
+				 test-distance)
+    (while (and (not (> (point) end)) data)
+      (setq current-sub (replace-regexp-in-string "\n" " " (subed-subtitle-text)))
+      (setq num-words (- (length (split-string current-sub " ")) 2))
+      (setq candidate (mapconcat (lambda (o) (alist-get 'text o))
+                                 (seq-take data num-words) " "))
+      (setq current-distance (string-distance current-sub candidate))
+      ;; add another word to see if the distance goes down
+      (setq test-distance (string-distance current-sub
+                                           (mapconcat (lambda (o) (alist-get 'text o))
+                                                      (seq-take data (1+ num-words)) " ")))
+      (while (< test-distance current-distance)
+        (setq current-distance test-distance
+              num-words (1+ num-words)
+              test-distance (string-distance current-sub
+                                             (mapconcat (lambda (o) (alist-get 'text o))
+                                                        (seq-take data (1+ num-words)) " "))))
+      (subed-set-subtitle-time-start
+       (alist-get
+        'start
+        (seq-find (lambda (o) (alist-get 'start o))
+                  (seq-take data num-words))))
+      (subed-set-subtitle-time-stop
+       (alist-get
+        'end
+        (seq-find (lambda (o) (alist-get 'end o))
+                  (reverse (seq-take data num-words)))))
+      (subed-word-data-refresh-text-properties-for-subtitle)
+      (setq data (seq-drop data num-words))
+      (unless (subed-forward-subtitle-text)
+        (goto-char (point-max))))))
+
 (with-eval-after-load 'subed-align
   (add-hook 'subed-align-region-hook #'subed-word-data-refresh-region))
 
