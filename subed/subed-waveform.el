@@ -105,11 +105,6 @@ Nil means show only the waveform for the current subtitle."
   :type 'boolean
   :group 'subed-waveform)
 
-(defcustom subed-waveform-ffmpeg-executable "ffmpeg"
-  "Path to the FFMPEG executable used for generating waveforms."
-  :type 'file
-  :group 'subed-waveform)
-
 (defcustom subed-waveform-ffmpeg-filter-args ":colors=gray"
   "Additional arguments for the showwavespic filter.
 The background is black by default and the foreground gray.
@@ -244,6 +239,7 @@ WIDTH and HEIGHT are given in pixels."
            width height)
    "[bg][fg]overlay=format=auto,drawbox=x=(iw-w)/2:y=(ih-h)/2:w=iw:h=1:color=#9cf42f"))
 
+(make-obsolete-variable 'subed-waveform-ffmpeg-executable 'subed-ffmpeg-executable "1.2.22")
 (make-obsolete-variable 'subed-waveform-ffprobe-executable 'subed-ffprobe-executable "1.2.22")
 (make-obsolete-variable 'subed-waveform-file-duration-ms-cache 'subed-file-duration-ms-cache "1.2.22")
 (make-obsolete 'subed-waveform-convert-ffprobe-tags-duration-to-ms 'subed-convert-ffprobe-tags-duration-to-ms "1.2.22")
@@ -282,7 +278,7 @@ and HEIGHT are dimensions in pixels."
             "-c:v" "png"
             "-f" "image2" "-"))))
     (with-temp-buffer
-      (apply 'call-process subed-waveform-ffmpeg-executable nil t nil args)
+      (apply 'call-process subed-ffmpeg-executable nil t nil args)
       (encode-coding-string (buffer-string) 'binary))))
 
 (defun subed-waveform--msecs-to-ffmpeg (msecs)

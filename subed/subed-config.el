@@ -228,6 +228,11 @@ doing so."
   "Remembers whether point-to-player was originally enabled by the user.
 Used when temporarily disabling point-to-player sync.")
 
+(defcustom subed-ffmpeg-executable "ffmpeg"
+  "Path to the FFmpeg executable."
+  :type 'file
+  :group 'subed)
+
 (defcustom subed-ffprobe-executable "ffprobe"
   "Path to the FFprobe executable used for measuring file duration."
   :type 'file
