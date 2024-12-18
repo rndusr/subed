@@ -319,10 +319,13 @@ See \"List of events\" in mpv(1)."
 
 (defun subed-mpv-seek (msec)
   "Move playback position MSEC milliseconds relative to current position."
+  (interactive "NOffset in ms: ")
   (subed-mpv--client-send `(seek ,(/ msec 1000.0) relative+exact)))
 
 (defun subed-mpv-jump (msec)
   "Move playback position to absolute position MSEC milliseconds."
+  (interactive "MTimestamp or msecs: ")
+  (setq msec (subed-to-msecs msec))
   (subed-mpv--client-send `(seek ,(/ msec 1000.0) absolute+exact)))
 
 (defun subed-mpv-jump-to-current-subtitle ()
@@ -342,21 +345,73 @@ See \"List of events\" in mpv(1)."
       (subed-debug "Seeking player to end of focused subtitle: %S" cur-sub-end)
       (subed-mpv-jump cur-sub-end))))
 
+(defun subed-mpv-jump-to-before-current-subtitle ()
+  "Move playback position before the current subtitle."
+  (interactive)
+  (let ((cur-sub-start (subed-subtitle-msecs-start)))
+    (when cur-sub-start
+      (setq cur-sub-start (- cur-sub-start subed-sample-msecs))
+      (subed-debug "Seeking player to before focused subtitle: %S" cur-sub-start)
+      (subed-mpv-jump cur-sub-start))))
+
+(defun subed-mpv-jump-to-end-of-current-subtitle ()
+  "Move playback position to the end of current subtitle."
+  (interactive)
+  (let ((cur-sub-end (subed-subtitle-msecs-stop)))
+    (when cur-sub-end
+      (subed-debug "Seeking player to end of focused subtitle: %S" cur-sub-end)
+      (subed-mpv-jump cur-sub-end))))
+
+(defun subed-mpv-back-large-step ()
+  "Move back one large step."
+  (interactive)
+  (subed-mpv--client-send `(seek ,(- 0 subed-mpv-large-step-seconds) relative+exact)))
+
+(defun subed-mpv-back-small-step ()
+  "Move back one small step."
+  (interactive)
+  (subed-mpv--client-send `(seek ,(- 0 subed-mpv-small-step-seconds) relative+exact)))
+
+(defun subed-mpv-small-step ()
+  "Move forward one small step."
+  (interactive)
+  (subed-mpv--client-send `(seek ,subed-mpv-small-step-seconds relative+exact)))
+
+(defun subed-mpv-large-step ()
+  "Move forward one large step."
+  (interactive)
+  (subed-mpv--client-send `(seek ,subed-mpv-large-step-seconds relative+exact)))
+
+(defun subed-mpv-undo-seek ()
+  "Undo a seek."
+  (interactive)
+  (subed-mpv--client-send `(revert-seek)))
+
 (defun subed-mpv-frame-step ()
   "Step one frame forward.
 Set up keybindings so that repeatedly pressing `,' and `.' moves
 by frames until any other key is pressed."
   (interactive)
-  (subed-mpv--client-send `(frame-step))
-  (set-transient-map subed-mpv-frame-step-map))
+  (subed-mpv--client-send `(frame-step)))
 
 (defun subed-mpv-frame-back-step ()
   "Step one frame backward.
 Set up keybindings so that repeatedly pressing `,' and `.' moves
 by frames until any other key is pressed."
   (interactive)
-  (subed-mpv--client-send `(frame-back-step))
-  (set-transient-map subed-mpv-frame-step-map))
+  (subed-mpv--client-send `(frame-back-step)))
+
+(defun subed-mpv-backward-subtitle-and-jump ()
+  "Go to the previous subtitle and jump to its beginning."
+  (interactive)
+  (subed-backward-subtitle-text)
+  (subed-mpv-jump-to-current-subtitle))
+
+(defun subed-mpv-forward-subtitle-and-jump ()
+  "Go to the next subtitle and jump to its beginning."
+  (interactive)
+  (subed-forward-subtitle-text)
+  (subed-mpv-jump-to-current-subtitle))
 
 (defun subed-mpv-add-subtitles (file)
   "Load FILE as subtitles in mpv."
@@ -402,7 +457,8 @@ hosting providers."
   (setq subed-mpv-media-file url)
   (subed-mpv--play url))
 
-(defvar subed-mpv-play-from-file-hook nil "Functions to run after a media file is loaded.
+(defvar subed-mpv-play-from-file-hook nil
+  "Functions to run after a media file is loaded.
 Called with FILE as argument.")
 
 (defun subed-mpv-play-from-file (file)
@@ -435,6 +491,12 @@ time the buffer is saved."
   "Close connection to mpv process and kill the process."
   (subed-mpv--client-disconnect)
   (subed-mpv--server-stop))
+
+(defun subed-mpv-control ()
+  "Use keyboard shortcuts to control MPV.
+See `subed-mpv-control-map'."
+  (interactive)
+  (set-transient-map subed-mpv-control-map t))
 
 (provide 'subed-mpv)
 ;;; subed-mpv.el ends here

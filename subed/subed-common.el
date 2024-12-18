@@ -932,6 +932,36 @@ See `subed-increase-start-time' about ARG."
     (subed--run-subtitle-time-adjusted-hook)
     subed-mpv-playback-position))
 
+(defun subed-copy-player-pos-to-start-time-and-copy-to-previous ()
+  "Replace current subtitle's start time with current playback time.
+Update the previous subtitle's stop time."
+  (interactive)
+  (when (and subed-mpv-playback-position
+             (subed-subtitle-msecs-start))
+    (subed-set-subtitle-time-start subed-mpv-playback-position)
+    (subed--run-subtitle-time-adjusted-hook)
+    (save-excursion
+      (when (subed-backward-subtitle-time-stop)
+        (subed-set-subtitle-time-stop
+         (- subed-mpv-playback-position subed-subtitle-spacing)))
+      (subed--run-subtitle-time-adjusted-hook))
+    subed-mpv-playback-position))
+
+(defun subed-copy-player-pos-to-stop-time-and-copy-to-next ()
+  "Replace current subtitle's stop time with current playback time.
+Update the next subtitle's start time."
+  (interactive)
+  (when (and subed-mpv-playback-position
+             (subed-subtitle-msecs-stop))
+    (subed-set-subtitle-time-stop subed-mpv-playback-position)
+    (subed--run-subtitle-time-adjusted-hook)
+    (save-excursion
+      (when (subed-forward-subtitle-time-start)
+        (subed-set-subtitle-time-start
+         (+ subed-mpv-playback-position subed-subtitle-spacing)))
+      (subed--run-subtitle-time-adjusted-hook))
+    subed-mpv-playback-position))
+
 
 ;;; Moving subtitles
 ;;; (adjusting start and stop time by the same amount)
@@ -1070,7 +1100,8 @@ subtitles by the same offset, use `subed-move-subtitles' instead."
                     (user-error "Can't scale when contraction would eliminate region"))
                   (goto-char end)
                   (move-subtitle msecs :ignore-negative-duration)
-                  (funcall scale-subtitles)))))))))))
+                  (funcall scale-subtitles)
+                  (run-hook-with-args 'subed-region-adjusted-hook beg (point))))))))))))
 
 (defun subed--move-subtitles-in-region (msecs beg end)
   "Move subtitles in region specified by BEG and END by MSECS milliseconds."
@@ -1106,7 +1137,8 @@ subtitles by the same offset, use `subed-move-subtitles' instead."
 									(throw 'bumped-into-subtitle t))
 								(subed-forward-subtitle-id)
 								(subed-for-each-subtitle (point) end nil
-									(move-subtitle msecs :ignore-negative-duration))))))))))
+									(move-subtitle msecs :ignore-negative-duration)))))
+          (run-hook-with-args 'subed-region-adjusted-hook beg (point)))))))
 
 (defun subed-scale-subtitles (msecs &optional beg end)
   "Scale subtitles between BEG and END after moving END MSECS.
@@ -2429,6 +2461,22 @@ Does not yet take overlapping subtitles into account."
     (when (called-interactively-p 'any)
       (message "%s" (subed-msecs-to-timestamp sum)))
     sum))
+
+(defun subed-forward-word (&optional arg)
+  "Skip timestamps."
+  (interactive "^p")
+  (setq arg (or arg 1))
+  (let ((end (or (save-excursion (subed-jump-to-subtitle-end)) (point))))
+    (loop while (> arg 0)
+          do
+          (forward-word 1)
+          (skip-syntax-forward "^\s")
+          (setq arg (1- arg))
+          (when (> (point) end)
+            (subed-jump-to-subtitle-text)
+            (forward-word 1)
+            (skip-syntax-forward "^\s")
+            (setq end (or (save-excursion (subed-jump-to-subtitle-end)) (point)))))))
 
 ;;; Experimental retiming workflow
 

@@ -238,14 +238,17 @@ Used when temporarily disabling point-to-player sync.")
   :type 'file
   :group 'subed)
 
-(defcustom subed-mpv-socket-dir (concat (temporary-file-directory) "subed")
-  "Path to Unix IPC socket that is passed to mpv's --input-ipc-server option."
-  :type 'file
-  :group 'subed)
-
 (defcustom subed-mpv-executable "mpv"
   "Path or filename of mpv executable."
   :type 'file
+  :group 'subed)
+
+(defcustom subed-mpv-large-step-seconds 5 "Number of seconds to move for a large step."
+  :type 'number
+  :group 'subed)
+
+(defcustom subed-mpv-small-step-seconds 1 "Number of seconds to move for a large step."
+  :type 'number
   :group 'subed)
 
 (defcustom subed-mpv-arguments '("--osd-level=2" "--osd-fractions" "--keep-open=yes")
@@ -253,6 +256,11 @@ Used when temporarily disabling point-to-player sync.")
 The options --input-ipc-server=SRTEDIT-MPV-SOCKET and --idle are
 hardcoded."
   :type '(repeat string)
+  :group 'subed)
+
+(defcustom subed-mpv-socket-dir (concat (temporary-file-directory) "subed")
+  "Path to Unix IPC socket that is passed to mpv's --input-ipc-server option."
+  :type 'file
   :group 'subed)
 
 (defun subed--buffer-file-name ()
@@ -296,9 +304,13 @@ Otherwise, adjust the stop time of the current subtitle."
 
 ;;; Hooks
 
-(defvar-local subed-subtitle-time-adjusted-hook ()
+(defvar-local subed-subtitle-time-adjusted-hook nil
   "Functions to call when a subtitle's start or stop time has changed.
 The functions are called with the subtitle's start time.")
+
+(defvar-local subed-region-adjusted-hook nil
+  "Functions to call when the times for subtitles in a region have changed.
+The functions are called with BEG and END for the region.")
 
 (defvar-local subed-subtitle-merged-hook nil
   "Functions to call when a subtitle has been merged.")

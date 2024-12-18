@@ -41,9 +41,6 @@
 Ex: task_adjust_boundary_nonspeech_min=0.500|task_adjust_boundary_nonspeech_string=REMOVE
 will remove silence and other non-speech spans.")
 
-(defvar subed-align-region-hook nil "Functions to run after realigning a region.
-Each function will be called with BEG and END.")
-
 ;;;###autoload
 (defun subed-align-region (audio-file beg end)
   "Align just the given section."
@@ -105,7 +102,7 @@ Each function will be called with BEG and END.")
               (let ((current (pop results)))
                 (subed-set-subtitle-time-start (elt current 1))
                 (subed-set-subtitle-time-stop (elt current 2)))))
-          (run-hook-with-args 'subed-align-region-hook beg end))
+          (run-hook-with-args 'subed-region-adjusted-hook beg end))
       (delete-file temp-input-file)
       (delete-file temp-file))))
 

@@ -206,8 +206,8 @@ rounded to the nearest multiple of this number."
     (remove-hook 'subed-subtitle-merged-hook 'subed-waveform-subtitle-merged t)
     (remove-hook 'subed-subtitles-sorted-hook 'subed-waveform-refresh t)))
 
-(with-eval-after-load 'subed-align
-  (add-hook 'subed-align-region-hook #'subed-waveform-refresh-after-realigning))
+(with-eval-after-load 'subed
+  (add-hook 'subed-region-adjusted-hook #'subed-waveform-refresh-region))
 
 (defconst subed-waveform-volume-map
   (let ((map (make-sparse-keymap)))
@@ -516,7 +516,7 @@ This function ignores arguments and can be used in hooks."
     (subed-jump-to-subtitle-text)
     (subed-waveform--make-overlay)))
 
-(defun subed-waveform-refresh-after-realigning (beg end)
+(defun subed-waveform-refresh-region (beg end)
   "Refresh waveforms after modifying region."
   (when subed-waveform-minor-mode
     (save-excursion

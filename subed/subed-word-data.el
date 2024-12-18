@@ -430,8 +430,8 @@ Assumes words haven't been edited."
       (unless (subed-forward-subtitle-text)
         (goto-char (point-max))))))
 
-(with-eval-after-load 'subed-align
-  (add-hook 'subed-align-region-hook #'subed-word-data-refresh-region))
+(with-eval-after-load 'subed
+  (add-hook 'subed-region-adjusted-hook #'subed-word-data-refresh-region))
 
 
 (provide 'subed-word-data)

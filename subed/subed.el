@@ -41,12 +41,45 @@
 
 (declare-function tramp-tramp-file-p "tramp")
 
-(defconst subed-mpv-frame-step-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "." #'subed-mpv-frame-step)
-    (define-key map "," #'subed-mpv-frame-back-step)
-    map)
-  "A keymap for stepping through the media file by frames.")
+(define-obsolete-variable-alias 'subed-mpv-frame-step-map 'subed-mpv-control-map "2024-12-18")
+
+(defvar-keymap subed-mpv-control-map
+	:doc "Shortcuts for focusing on controlling MPV."
+  :name "MPV"
+	"." #'subed-mpv-frame-step
+	"," #'subed-mpv-frame-back-step
+	"<left>" #'subed-mpv-back-large-step
+	"S-<left>" #'subed-mpv-back-small-step
+	"<right>" #'subed-mpv-large-step
+	"S-<right>" #'subed-mpv-small-step
+	"SPC" #'subed-mpv-toggle-pause
+	"u" #'subed-mpv-undo-seek
+	"j" #'subed-mpv-jump-to-current-subtitle
+	"J" #'subed-mpv-jump-to-current-subtitle-near-end
+	"s" #'subed-mpv-seek
+	"S" #'subed-mpv-jump
+  "l" #'subed-toggle-loop-over-current-subtitle
+	"[" #'subed-copy-player-pos-to-start-time
+	"]" #'subed-copy-player-pos-to-stop-time
+	"{" #'subed-copy-player-pos-to-start-time-and-copy-to-previous
+	"}" #'subed-copy-player-pos-to-stop-time-and-copy-to-next
+	"b" #'subed-backward-subtitle-text
+	"f" #'subed-forward-subtitle-text
+	"p" #'subed-backward-subtitle-text
+	"n" #'subed-forward-subtitle-text
+  "<up>" #'subed-backward-subtitle-text
+	"<down>" #'subed-forward-subtitle-text
+  "S-<up>" #'subed-mpv-backward-subtitle-and-jump
+	"S-<down>" #'subed-mpv-forward-subtitle-and-jump
+	;; aegisub-inspired keyboard shortcuts
+	"q" #'subed-mpv-jump-to-before-current-subtitle
+	"d" #'subed-mpv-jump-to-current-subtitle-near-end
+	"e" #'subed-mpv-jump-to-current-subtitle
+	"w" #'subed-mpv-jump-to-end-of-current-subtitle
+	"x" #'subed-backward-subtitle-text
+	"z" #'subed-forward-subtitle-text
+  "X" #'subed-mpv-backward-subtitle-and-jump
+	"Z" #'subed-mpv-forward-subtitle-and-jump)
 
 (defconst subed-mode-map
   (let ((subed-mode-map (make-keymap)))
@@ -87,7 +120,7 @@
     (define-key subed-mode-map (kbd "C-c C-d") #'subed-toggle-debugging)
     (define-key subed-mode-map (kbd "C-c C-v") #'subed-mpv-play-from-file)
     (define-key subed-mode-map (kbd "C-c C-u") #'subed-mpv-play-from-url)
-    (define-key subed-mode-map (kbd "C-c C-f") subed-mpv-frame-step-map)
+    (define-key subed-mode-map (kbd "C-c C-f") #'subed-mpv-control)
     (define-key subed-mode-map (kbd "C-c C-p") #'subed-toggle-pause-while-typing)
     (define-key subed-mode-map (kbd "C-c C-l") #'subed-toggle-loop-over-current-subtitle)
     (define-key subed-mode-map (kbd "C-c C-r") #'subed-toggle-replay-adjusted-subtitle)
@@ -96,10 +129,10 @@
     (define-key subed-mode-map (kbd "C-c .") #'subed-toggle-sync-point-to-player)
     (define-key subed-mode-map (kbd "C-c ,") #'subed-toggle-sync-player-to-point)
     (define-key subed-mode-map (kbd "C-c C-t") (let ((html-tag-keymap (make-sparse-keymap)))
-						                                     (define-key html-tag-keymap (kbd "C-t") #'subed-insert-html-tag)
-						                                     (define-key html-tag-keymap (kbd "C-i") #'subed-insert-html-tag-italic)
-						                                     (define-key html-tag-keymap (kbd "C-b") #'subed-insert-html-tag-bold)
-						                                     html-tag-keymap))
+						                                (define-key html-tag-keymap (kbd "C-t") #'subed-insert-html-tag)
+						                                (define-key html-tag-keymap (kbd "C-i") #'subed-insert-html-tag-italic)
+						                                (define-key html-tag-keymap (kbd "C-b") #'subed-insert-html-tag-bold)
+						                                html-tag-keymap))
     subed-mode-map)
   "A keymap for editing subtitles.")
 
