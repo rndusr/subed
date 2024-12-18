@@ -54,11 +54,13 @@
 	"S-<right>" #'subed-mpv-small-step
 	"SPC" #'subed-mpv-toggle-pause
 	"u" #'subed-mpv-undo-seek
+	"S-<backspace>" #'subed-mpv-undo-seek
 	"j" #'subed-mpv-jump-to-current-subtitle
 	"J" #'subed-mpv-jump-to-current-subtitle-near-end
 	"s" #'subed-mpv-seek
 	"S" #'subed-mpv-jump
   "l" #'subed-toggle-loop-over-current-subtitle
+  ;; hmm, should we change these to work with the playback speed instead?
 	"[" #'subed-copy-player-pos-to-start-time
 	"]" #'subed-copy-player-pos-to-stop-time
 	"{" #'subed-copy-player-pos-to-start-time-and-copy-to-previous
@@ -67,6 +69,11 @@
 	"f" #'subed-forward-subtitle-text
 	"p" #'subed-backward-subtitle-text
 	"n" #'subed-forward-subtitle-text
+	"i" #'subed-mpv-screenshot
+	"I" #'subed-mpv-screenshot-with-subtitles ; note that this is the opposite of MPV's s/S
+  "t" #'subed-mpv-copy-position-as-timestamp
+  "T" #'subed-mpv-copy-position-as-seconds
+  "M-t" #'subed-mpv-copy-position-as-msecs
   "<up>" #'subed-backward-subtitle-text
 	"<down>" #'subed-forward-subtitle-text
   "S-<up>" #'subed-mpv-backward-subtitle-and-jump

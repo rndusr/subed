@@ -421,6 +421,70 @@ by frames until any other key is pressed."
   "Reload subtitle file from disk."
   (subed-mpv--client-send '(sub-reload)))
 
+(defun subed-mpv-screenshot (&optional file flags)
+  "Take a screenshot without subtitles.
+Save to FILE if specified.
+Use \\[universal-argument] to save to a specific file.
+Returns the filename."
+  (setq flags (or flags 'video))
+  (interactive (list (if current-prefix-arg (read-file-name "Filename: "))))
+  (if file
+      (subed-mpv--client-send `(screenshot-to-file ,file ,flags))
+    (let ((old-latest
+           (car (sort (seq-remove #'file-directory-p
+                                  (directory-files default-directory 'full "mpv-shot[0-9]+\\.jpg" t))
+                      #'file-newer-than-file-p))))
+      (subed-mpv--client-send `(screenshot ,flags))
+      (while (string=
+              (car (sort (seq-remove #'file-directory-p
+                                     (directory-files default-directory 'full "mpv-shot[0-9]+\\.jpg" t))
+                         #'file-newer-than-file-p))
+              old-latest)
+        (sit-for 0.5)
+        (setq file (car (sort (seq-remove #'file-directory-p
+                                          (directory-files default-directory 'full "mpv-shot[0-9]+\\.jpg" t))
+                              #'file-newer-than-file-p))))))
+  (kill-new file)
+  (message "Copied %s" file)
+  file)
+
+(defun subed-mpv-screenshot-with-subtitles (&optional file)
+  "Take a screenshot including subtitles.
+Save to FILE if specified.
+Use \\[universal-argument] to save to a specific file.
+Returns the filename."
+  (interactive (list (if current-prefix-arg (read-file-name "Filename: "))))
+  (subed-mpv-screenshot file 'subtitles))
+
+(defun subed-mpv-copy-position-as-timestamp ()
+  "Copy current playback position as a timestamp."
+  (interactive)
+  (if subed-mpv-playback-position
+      (progn
+        (let ((pos (subed-msecs-to-timestamp subed-mpv-playback-position)))
+          (kill-new pos)
+          (message "Copied %s" pos)))
+    (error "No playback position yet")))
+
+(defun subed-mpv-copy-position-as-seconds ()
+  "Copy current playback position as seconds.
+This might be helpful for ffmpeg."
+  (interactive)
+  (if subed-mpv-playback-position
+      (let ((pos (number-to-string (/ subed-mpv-playback-position 1000.0))))
+        (kill-new pos)
+        (message "Copied %s" pos))
+    (error "No playback position yet")))
+
+(defun subed-mpv-copy-position-as-msecs ()
+  "Copy current playback position as msecs."
+  (interactive)
+  (if subed-mpv-playback-position
+      (let ((pos (number-to-string subed-mpv-playback-position)))
+        (kill-new pos)
+        (message "Copied %s" pos))
+    (error "No playback position yet")))
+
 (define-obsolete-function-alias 'subed-mpv--is-video-file-p 'subed-mpv--is-media-file-p "1.20")
 (defun subed-mpv--is-media-file-p (filename)
   "Return non-nil if FILENAME is a media file.
