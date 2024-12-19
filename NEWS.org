@@ -1,6 +1,38 @@
 #+OPTIONS: toc:nil
 
 * subed news
+** Version 1.2.22 - 2024-12-19 - Sacha Chua
+
+- New commands:
+  - subed-sum-time displays the total time for the
+    subtitles. Note that this is the sum of the
+    duration of each subtitle, not the difference
+    between the earliest start time and the latest
+    end time.
+  - subed-retime-subtitles: provide a transient map for setting subtitle times.
+  - subed-align-region: use Aeneas to realign the
+    text within the region using the start and end
+    time in the region.
+  - subed-word-data-fix-subtitle-timing: use
+    WhisperX or SRV2 word data to adjust timing in
+    the region or buffer.
+  - subed-crop-subtitles, subed-crop-media-file
+  - lots of new commands for controlling MPV,
+    starting with the C-c C-f shortcut for
+    subed-mpv-control which uses
+    subed-mpv-control-map as the transient keymap.
+    Use M-x describe-variable
+    subed-mpv-control-map for details.
+- New hook: subed-region-adjusted-hook
+- Renamed subed-waveform-ffmpeg-executable to
+  subed-ffmpeg-executable, moved duration from
+  subed-waveform to subed.
+- Bugfixes and minor improvements:
+  - VTT bugfix: Require subtitle separator before NOTE so that cues can contain the string "Note"
+  - Fix compiler warnings.
+  - subed-word-data-load-from-file: offer directories during completion for easier navigation.
+- Added more notes to the README.org.
+
 ** Version 1.2.20, 1.2.21 - 2024-11-17 - Sacha Chua
 
 - subed-word-data.el: Bugfix, whoops. I should write tests for this someday...
