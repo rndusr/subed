@@ -1,6 +1,6 @@
 ;;; subed.el --- A major mode for editing subtitles  -*- lexical-binding: t; -*-
 
-;; Version: 1.2.22
+;; Version: 1.2.23
 ;; Maintainer: Sacha Chua <sacha@sachachua.com>
 ;; Author: Random User
 ;; Keywords: convenience, files, hypermedia, multimedia
@@ -38,6 +38,7 @@
 (require 'subed-debug)
 (require 'subed-common)
 (require 'subed-mpv)
+(require 'subed-menu)
 
 (declare-function tramp-tramp-file-p "tramp")
 

@@ -372,6 +372,8 @@ Requires the text properties to be set."
 Assumes words haven't been edited."
   (interactive (list (if (region-active-p) (min (point) (mark)))
                      (if (region-active-p) (max (point) (mark)))))
+  (unless subed-word-data--cache
+    (call-interactively #'subed-word-data-load-from-file))
   (setq beg (or beg (point-min)))
   (setq end (if end (save-excursion
                       (goto-char end)

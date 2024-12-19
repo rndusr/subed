@@ -634,7 +634,7 @@ Return new point."
          end (point-max)))
     (when beg
       (remove-overlays beg end)
-      (delete-region beg end))))
+      (kill-region beg end))))
 
 (defun subed-parse-file (filename &optional mode-func)
   "Return the subtitles from FILENAME in a list.

@@ -1,6 +1,11 @@
 #+OPTIONS: toc:nil
 
 * subed news
+
+** Version 1.2.23 - 2024-12-19 - Sacha Chua
+
+- New menu.
+
 ** Version 1.2.22 - 2024-12-19 - Sacha Chua
 
 - New commands:
