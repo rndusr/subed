@@ -17,7 +17,7 @@ formats are:
   it's a common data format, but you can use ~subed-tsv-mode~ to turn
   it on in a buffer.
 
-[[file:https://raw.githubusercontent.com/sachac/subed/master/screenshot.jpg]]
+[[file:screenshot.jpg]]
 
 #+CAPTION: With word data and waveforms
 [[file:word-data-and-waveform.png]]
