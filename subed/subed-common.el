@@ -636,6 +636,7 @@ Return new point."
       (remove-overlays beg end)
       (kill-region beg end))))
 
+;;;###autoload
 (defun subed-parse-file (filename &optional mode-func)
   "Return the subtitles from FILENAME in a list.
 If MODE-FUNC is non-nil, use that function to initialize the mode.
@@ -716,6 +717,24 @@ before including them."
               beg
               end)
              include-comments)))
+
+(defun subed-section-comments-as-chapters ()
+  "Copy subtitle comments as chapters for video descriptions."
+  (interactive)
+  (let ((result (mapconcat
+								 (lambda (sub)
+									 (if (elt sub 4)
+											 (concat (format-seconds "%02h:%z%02m:%02s"
+																							 (floor (/ (elt sub 1) 1000)))
+															 " "
+															 (string-trim (elt sub 4))
+															 "\n")
+										 ""))
+								 (subed-subtitle-list)
+								 "")))
+    (when (called-interactively-p 'any)
+      (kill-new result))
+    result))
 
 (subed-define-generic-function sanitize ()
   "Sanitize this file."
