@@ -350,14 +350,23 @@ Update the end timestamp accordingly.
 Use the format-specific function for MAJOR-MODE."
   (save-excursion
     (subed-jump-to-subtitle-end)
-    (let ((pos (point)) new-end)
+    (let ((pos (point))
+          cur-comment
+          next-comment
+          new-end)
       (if (subed-forward-subtitle-time-stop)
           (progn
+            (setq next-comment (subed-subtitle-comment))
             (when (looking-at subed--regexp-timestamp)
               (setq new-end (subed-timestamp-to-msecs (match-string 0))))
             (subed-jump-to-subtitle-text)
             (delete-region pos (point))
             (insert " ")
+            (when next-comment
+              (setq cur-comment (subed-subtitle-comment))
+              (subed-set-subtitle-comment (if cur-comment
+                                              (concat cur-comment "\n" next-comment)
+                                            next-comment)))
             (let ((subed-enforce-time-boundaries nil))
               (subed-set-subtitle-time-stop new-end))
             (run-hooks 'subed-subtitle-merged-hook))
