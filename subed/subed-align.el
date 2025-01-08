@@ -99,7 +99,7 @@ will remove silence and other non-speech spans.")
           (setq results (subed-parse-file temp-file))
           (save-excursion
             (subed-for-each-subtitle beg end nil
-              (let ((current (pop results)))
+              (when-let* ((current (pop results)))
                 (subed-set-subtitle-time-start (elt current 1))
                 (subed-set-subtitle-time-stop (elt current 2)))))
           (run-hook-with-args 'subed-region-adjusted-hook beg end))
