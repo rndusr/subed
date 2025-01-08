@@ -367,6 +367,59 @@ Requires the text properties to be set."
         (setq last-start-time nil)))
     (goto-char max-pos)))
 
+(defun subed-word-data-find-minimum-distance (from-n to-n distance-fn &optional short-circuit low-threshold)
+  "Return (number distance) that minimizes DISTANCE-FN.
+Check the range FROM (inclusive) to TO (exclusive).
+If SHORT-CIRCUIT is specified, call that function with i as the argument and stop when it returns true.
+If LOW-THRESHOLD is specified, stop when the distance is less than or equal to that number."
+  (setq low-threshold (or low-threshold 0))
+  (catch 'found
+    (let* (min-distance
+				   current-distance
+           i)
+      (setq i from-n)
+      (while (< i to-n)
+        (setq current-distance (funcall distance-fn i))
+        (when (or (null min-distance) (< current-distance (cdr min-distance)))
+          (setq min-distance (cons i current-distance))
+          (when (<= current-distance low-threshold)
+            (throw 'found min-distance)))
+        (when (and short-circuit (funcall short-circuit i))
+          (throw 'found min-distance))
+        (setq i (1+ i)))
+      min-distance)))
+
+(defun subed-word-data-find-approximate-match (phrase list-of-words &optional short-circuit)
+  "Match PHRASE against the beginning of LIST-OF-WORDS.
+LIST-OF-WORDS is a list of strings or a list of alists that have 'text.
+If SHORT-CIRCUIT is non-nil, use it as a regexp that short-circuits recognition and stops there.
+Return (distance . list of words) that minimizes the string distance from PHRASE.
+"
+  (let ((min-distance
+         (subed-word-data-find-minimum-distance
+          1
+          (+ (length (split-string phrase " ")) 8)
+          (lambda (num-words)
+            (string-distance phrase
+                             (mapconcat
+                              (lambda (o)
+                                (if (stringp o) o (alist-get 'text o)))
+                              (seq-take list-of-words num-words)
+                              " ")))
+          (if short-circuit
+              (lambda (num-words)
+                (string-match
+                 short-circuit
+                 (mapconcat
+                  (lambda (o)
+                    (if (stringp o) o (alist-get 'text o)))
+                  (seq-take list-of-words num-words)
+                  " ")))))))
+    (cons (cdr min-distance) (seq-take list-of-words (car min-distance)))))
+
+;; (subed-word-data-find-approximate-match "Go into the room." (split-string "Go in to the room. There you will" " "))
+;; (subed-word-data-find-approximate-match "The quick brown fox jumps over the lazy dog" (split-string "The quick, oops, the quick brown fox jumps over the lazy dog and goes all sorts of places" " ") "\\<oops\\>")
+;; (subed-word-data-find-approximate-match "I already talk pretty quickly," (split-string "I already talk pretty quickly. Oops. I already talk pretty quickly, so I'm not going" " ") "\\<oops\\>")
 (defun subed-word-data-fix-subtitle-timing (beg end)
   "Sets subtitle starts and stops based on the word data.
 Assumes words haven't been edited."
@@ -395,42 +448,37 @@ Assumes words haven't been edited."
                   (< (or (alist-get 'start o) 0)
                      start-ms))
                 subed-word-data--cache))
-				 min-distance
-				 current-distance
-				 current-sub
-				 num-words
-				 candidate
-				 test-distance)
+				 candidate)
     (while (and (not (> (point) end)) data)
       (setq current-sub (replace-regexp-in-string "\n" " " (subed-subtitle-text)))
-      (setq num-words (- (length (split-string current-sub " ")) 2))
-      (setq candidate (mapconcat (lambda (o) (alist-get 'text o))
-                                 (seq-take data num-words) " "))
-      (setq current-distance (string-distance current-sub candidate))
-      ;; add another word to see if the distance goes down
-      (setq test-distance (string-distance current-sub
-                                           (mapconcat (lambda (o) (alist-get 'text o))
-                                                      (seq-take data (1+ num-words)) " ")))
-      (while (< test-distance current-distance)
-        (setq current-distance test-distance
-              num-words (1+ num-words)
-              test-distance (string-distance current-sub
-                                             (mapconcat (lambda (o) (alist-get 'text o))
-                                                        (seq-take data (1+ num-words)) " "))))
-      (subed-set-subtitle-time-start
-       (alist-get
-        'start
-        (seq-find (lambda (o) (alist-get 'start o))
-                  (seq-take data num-words))))
-      (subed-set-subtitle-time-stop
-       (alist-get
-        'end
-        (seq-find (lambda (o) (alist-get 'end o))
-                  (reverse (seq-take data num-words)))))
-      (subed-word-data-refresh-text-properties-for-subtitle)
-      (setq data (seq-drop data num-words))
+      (let ((candidate (subed-word-data-find-approximate-match current-sub data)))
+        (subed-set-subtitle-time-start
+         (alist-get
+          'start
+          (seq-find (lambda (o) (alist-get 'start o))
+                    (cdr candidate))))
+        (subed-set-subtitle-time-stop
+         (alist-get
+          'end
+          (seq-find (lambda (o) (alist-get 'end o))
+                    (reverse (cdr candidate)))))
+        (subed-word-data-refresh-text-properties-for-subtitle)
+        (setq data (seq-drop data (length (cdr candidate)))))
       (unless (subed-forward-subtitle-text)
         (goto-char (point-max))))))
+
+(defun subed-word-data-move-untimed-words-from-previous ()
+	"Move untimed words from previous subtitle to current one."
+	(interactive)
+	(save-excursion
+		(subed-backward-subtitle-end)
+		(text-property-search-backward 'subed-word-data-end)
+		(goto-char (next-single-property-change (point) 'subed-word-data-end))
+		(let* ((start (point))
+					 (text (buffer-substring start (subed-jump-to-subtitle-end))))
+			(delete-region start (point))
+			(subed-forward-subtitle-text)
+			(insert text " "))))
 
 (with-eval-after-load 'subed
   (add-hook 'subed-region-adjusted-hook #'subed-word-data-refresh-region))
