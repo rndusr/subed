@@ -2097,7 +2097,7 @@ The region is defined by BEGIN and END."
 If QUIET is nil, show a message."
   (interactive "p")
   ;; FIXME: Consider displaying CPS on all cues (via jit-lock) rather than the current one?
-  (add-hook 'post-command-hook #'subed--update-cps-overlay nil t)
+  (add-hook 'post-command-hook #'subed--move-cps-overlay-to-current-subtitle nil t)
   (add-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle nil t)
   (add-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle nil t)
   (unless quiet
@@ -2107,7 +2107,7 @@ If QUIET is nil, show a message."
   "Disable showing CPS next to the subtitle heading.
 If QUIET is nil, show a message."
   (interactive)
-  (remove-hook 'post-command-hook #'subed--update-cps-overlay t)
+  (remove-hook 'post-command-hook #'subed--move-cps-overlay-to-current-subtitle t)
   (remove-hook 'subed-subtitle-motion-hook #'subed--move-cps-overlay-to-current-subtitle t)
   (remove-hook 'after-save-hook #'subed--move-cps-overlay-to-current-subtitle t)
   (when subed--cps-overlay
@@ -2467,7 +2467,8 @@ The wdiff program must be installed.  Set
 
 (defun subed-sum-time (&optional beg end)
   "Display the total time of the subtitles.
-Does not yet take overlapping subtitles into account."
+Does not yet take overlapping subtitles into account.
+BEG can also be a subtitle list."
   (interactive (list (and (region-active-p) (min (point) (mark)))
                      (and (region-active-p) (max (point) (mark)))))
   (let ((sum
@@ -2475,7 +2476,9 @@ Does not yet take overlapping subtitles into account."
           ;; TODO: Handle overlapping subtitles
           (lambda (prev val)
             (+ prev (- (elt val 2) (elt val 1))))
-          (subed-subtitle-list beg end)
+          (if (listp beg)
+              beg
+            (subed-subtitle-list beg end))
           0)))
     (when (called-interactively-p 'any)
       (message "%s" (subed-msecs-to-timestamp sum)))
