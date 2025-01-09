@@ -394,19 +394,25 @@ If LOW-THRESHOLD is specified, stop when the distance is less than or equal to t
 LIST-OF-WORDS is a list of strings or a list of alists that have 'text.
 If SHORT-CIRCUIT is non-nil, use it as a regexp that short-circuits recognition and stops there.
 Return (distance . list of words) that minimizes the string distance from PHRASE.
+distance is expressed as a ratio of number of edits / maximum length of phrase or words.
 "
   (let ((min-distance
          (subed-word-data-find-minimum-distance
           1
           (+ (length (split-string phrase " ")) 8)
           (lambda (num-words)
-            (string-distance phrase
-                             (mapconcat
-                              (lambda (o)
-                                (if (stringp o) o (alist-get 'text o)))
-                              (seq-take list-of-words num-words)
-                              " ")))
-          (if short-circuit
+            (let ((cand (mapconcat
+                         (lambda (o)
+                           (if (stringp o) o (alist-get 'text o)))
+                         (seq-take list-of-words num-words)
+                         " ")))
+              (/
+               (* 1.0
+                  (string-distance phrase cand))
+               (max (length phrase)
+                    (length cand)))))
+          (if (and short-circuit
+                   (not (string-match short-circuit phrase)))
               (lambda (num-words)
                 (string-match
                  short-circuit
