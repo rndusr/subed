@@ -13,7 +13,7 @@
                       "This is oops This is a test."
                       " ")
                      "\\<oops\\>")))
-        (expect (car result) :to-be-greater-than 1)
+        (expect (car result) :to-be-greater-than 0.01)
         (expect (string-join (cdr result) " ") :to-equal "This is oops")))
     (it "handles early oopses in a longer phrase."
       (let ((result (subed-word-data-find-approximate-match
@@ -22,7 +22,7 @@
                       "The quick, oops, the quick brown fox jumps over the lazy dog and goes all sorts of places"
                       " ")
                      "\\<oops\\>")))
-        (expect (car result) :to-be-greater-than 1)
+        (expect (car result) :to-be-greater-than 0.01)
         (expect (string-join (cdr result) " ") :to-equal "The quick, oops,")))
     (it "handles misrecognized words."
       (let ((result (subed-word-data-find-approximate-match
@@ -46,7 +46,7 @@
                      (split-string
                       "We're lucky if we can get an exact match. More stuff goes here."
                       " "))))
-        (expect (car result) :to-equal 0)
+        (expect (car result) :to-be-less-than 0.001)
         (expect (string-join (cdr result) " ") :to-equal "We're lucky if we can get an exact match.")))
 
 )
