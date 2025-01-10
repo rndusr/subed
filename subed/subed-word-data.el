@@ -486,6 +486,122 @@ Assumes words haven't been edited."
 			(subed-forward-subtitle-text)
 			(insert text " "))))
 
+(defvar subed-word-data-script-difference-threshold 0.2
+	"*If string difference is above this threshold, include original text as a comment.")
+
+(defvar subed-word-data-oops-regexp "\\<oops\\>"
+	"*Regular expression matching the signal used after a false start.")
+
+(defun subed-word-data-combine-script-and-transcript (phrases bag-of-words &optional oops-regexp keep-transcript-words)
+	"Use PHRASES to split the words in BAG-OF-WORDS.
+If OOPS-REGEXP is non-nil, use that as the regular expression that signals a false start.
+If KEEP-TRANSCRIPT-WORDS is non-nil, don't correct transcript words.
+Return a list of subtitles and comments."
+	(let* ((phrase-length (length phrases))
+				 (phrase-cursor 0)
+				 (case-fold-search t)
+				 lookback
+				 min-candidate
+				 result)
+		(while (and (< phrase-cursor phrase-length)
+								bag-of-words)
+			(when (and oops-regexp (string-match oops-regexp (car bag-of-words)))
+				;; discard that word and figure out where we're restarting
+				(setf (elt (cdr (car result)) 3)
+              (concat (elt (cdr (car result)) 3) " " (car bag-of-words)))
+				(setf (elt (cdr (car result)) 4)
+							(string-trim
+							 (concat (or (elt (cdr (car result)) 4) "") "\n#+SKIP")))
+				(setq bag-of-words (cdr bag-of-words)))
+      (setq phrase-cursor
+						(- phrase-cursor
+							 (car (subed-word-data-find-minimum-distance
+										 0 (1+ (min phrase-cursor 4))
+										 (lambda (i)
+											 (if (< (- phrase-cursor i) 0)
+													 most-positive-fixnum
+												 (car (subed-word-data-find-approximate-match
+															 (elt phrases (- phrase-cursor i))
+															 bag-of-words
+															 oops-regexp))))))))
+      ;; mark the previous ones as oopses also
+      (dolist (o result)
+        (when (>= (car o) phrase-cursor)
+          (unless (string-match "#\\+SKIP" (or (elt (cdr o) 4) ""))
+            (setf (elt (cdr o) 4)
+                  (string-trim
+                   (concat
+                    (or (elt (cdr o) 4) "")
+                    "\n"
+                    "#+SKIP"))))))
+			(setq candidate
+						(subed-word-data-find-approximate-match
+						 (elt phrases phrase-cursor)
+						 bag-of-words
+						 oops-regexp))
+			(setq result
+						(cons
+             (cons
+              phrase-cursor
+						  (if (and oops-regexp
+											 (string-match oops-regexp (string-join (cdr candidate) " "))
+											 (not (string-match oops-regexp (elt phrases phrase-cursor))))
+								  (list nil 0 0 (string-join (cdr candidate) " ") "#+SKIP")
+							  (setq phrase-cursor (1+ phrase-cursor))
+							  (list nil 0 0
+ 										  (if (or keep-transcript-words
+                              (> (car candidate) subed-word-data-script-difference-threshold))
+												  (string-join (cdr candidate) " ")
+											  (elt phrases (1- phrase-cursor)))
+                      (cond
+											 ((and keep-transcript-words (> (car candidate) 0))
+                        (concat "#+SCRIPT: " (elt phrases (1- phrase-cursor)) "\n"
+                                "#+DISTANCE: " (format "%.2f" (car candidate))))
+											 ((= (car candidate) 0) nil)
+                       ((> (car candidate) subed-word-data-script-difference-threshold)
+											  (concat "#+SCRIPT: " (elt phrases (1- phrase-cursor)) "\n"
+                                "#+DISTANCE: " (format "%.2f" (car candidate))))
+                       ((< (car candidate) subed-word-data-script-difference-threshold)
+											  (concat "#+TRANSCRIPT: " (string-join (cdr candidate) " ") "\n"
+                                "#+DISTANCE: " (format "%.2f" (car candidate))))
+                       ))))
+						 result))
+			;; found a good match, move to the next phrase
+			(setq bag-of-words (seq-drop bag-of-words (length (cdr candidate)))))
+		(mapcar 'cdr (reverse result))))
+
+(defun subed-word-data-use-script-file (script-file output-file &optional oops-regexp keep-transcript-words)
+	"Use the info from SCRIPT-FILE to correct the current transcript.
+Write OUTPUT-FILE so that it uses the words and phrasing from SCRIPT-FILE,
+but includes any extra phrases from TRANSCRIPT-FILE (such as oopses).
+If OOPS-REGEXP is non-nil, use that as the regular expression that signals a false start.
+If KEEP-TRANSCRIPT-WORDS is non-nil, don't correct current transcript words.
+
+When called with `\\[universal-argument]', don't correct current transcript words."
+	(interactive (list
+								(read-file-name "Script: ")
+								(read-file-name "Output file: ")
+								subed-word-data-oops-regexp
+								current-prefix-arg))
+	(let* ((phrases
+					(if (string= "vtt" (file-name-extension script-file))
+							(mapcar (lambda (o) (elt o 3)) (subed-parse-file script-file))
+						(with-temp-buffer
+							(insert-file script-file)
+							(split-string (string-trim (buffer-string)) "\n"))))
+				 (bag-of-words
+					(split-string
+					 (if (derived-mode-p 'subed-mode)
+               (mapconcat (lambda (o) (elt o 3)) (subed-subtitle-list) " ")
+						 (string-trim (buffer-string)))
+					 "[ \n]+"))
+				 (result (subed-word-data-combine-script-and-transcript phrases bag-of-words oops-regexp)))
+		(subed-create-file
+		 output-file
+		 result
+		 t)
+		(find-file output-file)))
+
 (with-eval-after-load 'subed
   (add-hook 'subed-region-adjusted-hook #'subed-word-data-refresh-region))
 
